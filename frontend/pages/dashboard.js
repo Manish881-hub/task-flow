@@ -125,7 +125,7 @@ function DashboardInner() {
   return (
     <div className="efferd-layout">
       <Head><title>Dashboard — TaskFlow</title></Head>
-      <EfferdSidebar />
+      <EfferdSidebar socketStatus={socketStatus} />
       <main className="efferd-main">
         <div className="container main">
         <div className="spread" style={{ marginBottom: "1rem" }}>

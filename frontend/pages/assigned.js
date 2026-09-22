@@ -53,7 +53,7 @@ function AssignedInner() {
   return (
     <div className="efferd-layout">
       <Head><title>Assigned to me — TaskFlow</title></Head>
-      <EfferdSidebar />
+      <EfferdSidebar socketStatus={socketStatus} />
       <main className="efferd-main">
         <div className="container main">
         <div className="spread" style={{ marginBottom: "1rem" }}>
