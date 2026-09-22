@@ -20,3 +20,5 @@ Short notes, one per commit, newest last:
 16. `Remove dead JS and Python imports` — `16-dead-imports.md`
 17. `Include actor names in activity` — `17-activity-names.md`
 18. `Rebuild app shell with real data` — `18-honest-shell.md`
+19. `Add EfferdCharts demo block` — `19-efferd-charts.md`
+20. `Show charts block on dashboard` — `20-dashboard-charts.md`

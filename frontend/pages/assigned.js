@@ -54,7 +54,7 @@ function AssignedInner() {
     <div className="efferd-layout">
       <Head><title>Assigned to me — TaskFlow</title></Head>
       <EfferdSidebar />
-      <main className="efferd-main">
+      <main className="efferd-main efferd-dark-main">
         <div className="container main">
         <div className="spread" style={{ marginBottom: "1rem" }}>
           <div>
