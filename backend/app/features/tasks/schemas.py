@@ -11,7 +11,7 @@ PRIORITIES = ("Low", "Medium", "High")
 
 class TaskCreate(BaseModel):
     title: str
-    description: str = ""
+    description: str | None = ""
     status: Literal["To Do", "In Progress", "Done"] = "To Do"
     priority: Literal["Low", "Medium", "High"] = "Medium"
     due_date: datetime | None = None
@@ -24,6 +24,11 @@ class TaskCreate(BaseModel):
         if not (1 <= len(v) <= 200):
             raise ValueError("title must be 1-200 chars")
         return v
+
+    @field_validator("description")
+    @classmethod
+    def description_ok(cls, v: str | None) -> str:
+        return v or ""
 
 
 class TaskUpdate(BaseModel):

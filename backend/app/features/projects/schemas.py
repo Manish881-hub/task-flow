@@ -8,7 +8,12 @@ from pydantic import BaseModel, EmailStr, field_validator
 
 class ProjectCreate(BaseModel):
     name: str
-    description: str = ""
+    description: str | None = ""
+
+    @field_validator("description")
+    @classmethod
+    def description_ok(cls, v: str | None) -> str:
+        return v or ""
 
     @field_validator("name")
     @classmethod
