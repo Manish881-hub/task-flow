@@ -1,7 +1,7 @@
 import Head from "next/head";
 import { useRouter } from "next/router";
 import { useCallback, useEffect, useMemo, useState } from "react";
-import Navbar from "../../components/Navbar";
+import EfferdSidebar from "../../components/dashboard/EfferdSidebar";
 import RequireAuth from "../../components/RequireAuth";
 import TaskCard from "../../components/TaskCard";
 import TaskModal from "../../components/TaskModal";
@@ -180,10 +180,11 @@ function ProjectInner() {
   if (!id) return null;
 
   return (
-    <div className="page">
+    <div className="efferd-layout">
       <Head><title>{project?.name ? `${project.name} — TaskFlow` : "Project — TaskFlow"}</title></Head>
-      <Navbar socketStatus={socketStatus} />
-      <main className="container main">
+      <EfferdSidebar currentProjectId={typeof id === "string" ? id : undefined} />
+      <main className="efferd-main">
+        <div className="container main">
         <ErrorBanner message={error} onRetry={loadProject} onDismiss={() => setError("")} />
 
         {state === "loading" && !project ? (
@@ -359,6 +360,7 @@ function ProjectInner() {
             }}
           />
         ) : null}
+        </div>
       </main>
     </div>
   );

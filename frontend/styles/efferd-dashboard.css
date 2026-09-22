@@ -1,0 +1,132 @@
+/* Efferd app shell — dark rail + stats. Scoped to .efferd-* only.
+   Dark rail constants live here (the light app theme stays in globals.css).
+   Rail: #16181d · border #23262f · text #f8fafc · muted #94a3b8 ·
+   faint #64748b · input #09090b · accent #1d70f5 (matches app blue theme). */
+
+.efferd-layout { display: flex; min-height: 100dvh; align-items: stretch; }
+
+.efferd-main { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+
+.efferd-sidebar {
+  width: 248px; flex: none;
+  background: #16181d; border-right: 1px solid #23262f;
+  color: #f8fafc;
+  display: flex; flex-direction: column; gap: 0.9rem;
+  padding: 1rem 0.75rem;
+  position: sticky; top: 0; height: 100dvh; overflow-y: auto;
+}
+.efferd-sidebar.collapsed { width: 76px; align-items: stretch; }
+
+.efferd-brand-link {
+  display: flex; align-items: center; gap: 0.6rem;
+  padding: 0.35rem 0.5rem; border-radius: 10px;
+  color: #f8fafc; font-weight: 800; font-size: 1rem; letter-spacing: -0.02em;
+  text-decoration: none;
+}
+.efferd-brand-link:hover { background: rgba(255, 255, 255, 0.05); }
+.efferd-brand-logo { border-radius: 8px; display: block; flex: none; }
+.efferd-brand-text { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+.efferd-search-btn {
+  display: flex; align-items: center; gap: 0.55rem;
+  width: 100%; padding: 0.5rem 0.65rem;
+  background: #09090b; border: 1px solid #23262f; border-radius: 10px;
+  color: #94a3b8; font: inherit; font-size: 0.85rem; cursor: pointer;
+  transition: border-color 180ms ease;
+}
+.efferd-search-btn:hover { border-color: #1d70f5; }
+.efferd-search-placeholder { flex: 1; text-align: left; }
+.kbd-dark { background: #23262f; border-color: #343945; color: #94a3b8; }
+
+.efferd-menu-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 0.15rem; }
+.efferd-menu-item {
+  display: flex; align-items: center; gap: 0.65rem;
+  padding: 0.55rem 0.65rem; border-radius: 10px;
+  color: #94a3b8; font-size: 0.9rem; font-weight: 600; text-decoration: none;
+  background: none; border: 0; width: 100%; font-family: inherit; cursor: pointer;
+  transition: background 180ms ease, color 180ms ease;
+}
+.efferd-menu-item:hover { background: rgba(255, 255, 255, 0.05); color: #f8fafc; }
+.efferd-menu-item.active { background: rgba(29, 112, 245, 0.16); color: #f8fafc; }
+.efferd-menu-icon { width: 17px; height: 17px; flex: none; }
+.efferd-menu-label-row { flex: 1; display: flex; align-items: center; justify-content: space-between; gap: 0.5rem; min-width: 0; }
+.efferd-count-badge {
+  font-size: 0.7rem; font-weight: 800;
+  background: rgba(29, 112, 245, 0.2); color: #7fb0ff;
+  border-radius: 999px; padding: 0.05rem 0.45rem; flex: none;
+}
+.efferd-menu-group-label {
+  font-size: 0.68rem; font-weight: 800; letter-spacing: 0.08em; text-transform: uppercase;
+  color: #64748b; padding: 0.4rem 0.65rem 0.25rem;
+}
+.efferd-projects-group { display: grid; gap: 0.15rem; }
+.efferd-project-dot {
+  width: 22px; height: 22px; border-radius: 7px; flex: none;
+  background: rgba(29, 112, 245, 0.16); color: #7fb0ff;
+  display: inline-flex; align-items: center; justify-content: center;
+  font-size: 0.7rem; font-weight: 800;
+}
+.efferd-project-item.active .efferd-project-dot { background: #1d70f5; color: #fff; }
+.efferd-truncate { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; }
+
+.efferd-sidebar-foot { margin-top: auto; display: grid; gap: 0.4rem; }
+.efferd-sidebar-foot .menu-wrap { position: relative; }
+.efferd-account-btn {
+  display: flex; align-items: center; gap: 0.55rem; width: 100%;
+  padding: 0.45rem 0.55rem; border-radius: 10px;
+  background: none; border: 1px solid transparent;
+  color: #f8fafc; font: inherit; font-size: 0.85rem; font-weight: 700; cursor: pointer;
+}
+.efferd-account-btn:hover { background: rgba(255, 255, 255, 0.05); }
+.efferd-avatar {
+  width: 26px; height: 26px; border-radius: 999px; flex: none;
+  background: rgba(29, 112, 245, 0.2); color: #7fb0ff;
+  display: inline-flex; align-items: center; justify-content: center;
+  font-size: 0.72rem; font-weight: 800;
+}
+.efferd-account-menu { background: #1c1f26; border-color: #343945; }
+.efferd-account-menu .menu-user { color: #f8fafc; }
+.efferd-account-menu .menu-email { color: #94a3b8; }
+.efferd-account-menu .menu-item { color: #f8fafc; }
+.efferd-account-menu .menu-item:hover { background: rgba(255, 255, 255, 0.06); }
+.efferd-account-menu .menu-head { border-color: #343945; }
+.efferd-collapse-btn {
+  display: flex; align-items: center; justify-content: center;
+  padding: 0.45rem; border-radius: 10px;
+  background: none; border: 1px solid #23262f; color: #94a3b8; cursor: pointer;
+}
+.efferd-collapse-btn:hover { color: #f8fafc; border-color: #343945; }
+
+/* Real-data stats strip (DashboardStats): counts + status bars, no fake data. */
+.efferd-stats { display: grid; gap: 0.9rem; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); }
+.efferd-stat-card {
+  background: var(--color-card); border: 1px solid var(--color-border);
+  border-radius: var(--radius-md); padding: 1rem 1.1rem;
+}
+.efferd-stat-label { font-size: 0.78rem; font-weight: 700; color: var(--color-muted); }
+.efferd-stat-value { font-size: 1.6rem; font-weight: 800; letter-spacing: -0.02em; margin: 0.15rem 0 0.6rem; }
+.efferd-stat-bar { height: 8px; border-radius: 999px; background: var(--color-bg); overflow: hidden; display: flex; }
+.efferd-stat-fill { height: 100%; }
+.efferd-stat-fill.todo { background: #94a3b8; }
+.efferd-stat-fill.progress { background: var(--color-primary); }
+.efferd-stat-fill.done { background: var(--color-success-strong); }
+.efferd-stat-legend { display: flex; gap: 0.8rem; margin-top: 0.5rem; font-size: 0.75rem; color: var(--color-muted); }
+.efferd-stat-legend i { display: inline-block; width: 8px; height: 8px; border-radius: 999px; margin-right: 0.3rem; }
+
+/* Small screens: rail becomes a horizontal top strip (pure CSS, no JS). */
+@media (max-width: 1023px) {
+  .efferd-layout { flex-direction: column; }
+  .efferd-sidebar {
+    width: 100%; height: auto; position: static;
+    flex-direction: row; align-items: center; gap: 0.6rem;
+    padding: 0.6rem 0.75rem; overflow-x: auto;
+    border-right: 0; border-bottom: 1px solid #23262f;
+  }
+  .efferd-sidebar nav, .efferd-sidebar .efferd-menu-list { display: flex; gap: 0.25rem; }
+  .efferd-projects-group, .efferd-brand-text, .efferd-search-placeholder,
+  .efferd-search-btn .kbd-hints, .efferd-menu-label-row span:first-child,
+  .efferd-account-btn .efferd-truncate, .efferd-collapse-btn { display: none; }
+  .efferd-search-btn { width: auto; }
+  .efferd-sidebar-foot { margin-top: 0; margin-left: auto; display: flex; align-items: center; }
+  .efferd-sidebar.collapsed { width: 100%; }
+}

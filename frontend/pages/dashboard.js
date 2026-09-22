@@ -1,7 +1,9 @@
 import Head from "next/head";
 import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
-import Navbar from "../components/Navbar";
+import EfferdSidebar from "../components/dashboard/EfferdSidebar";
+import DashboardStats from "../components/dashboard/DashboardStats";
+import { LiveDot } from "../components/Navbar";
 import RequireAuth from "../components/RequireAuth";
 import EmptyState from "../components/EmptyState";
 import Skeleton from "../components/Skeleton";
@@ -121,10 +123,11 @@ function DashboardInner() {
   };
 
   return (
-    <div className="page">
+    <div className="efferd-layout">
       <Head><title>Dashboard — TaskFlow</title></Head>
-      <Navbar socketStatus={socketStatus} />
-      <main className="container main">
+      <EfferdSidebar />
+      <main className="efferd-main">
+        <div className="container main">
         <div className="spread" style={{ marginBottom: "1rem" }}>
           <div>
             <h1 style={{ marginBottom: "0.2rem" }}>Good to see you{user?.name ? `, ${user.name}` : ""}</h1>
@@ -132,9 +135,16 @@ function DashboardInner() {
               {projects.length} project{projects.length === 1 ? "" : "s"} · {assigned.length} task{assigned.length === 1 ? "" : "s"} assigned to you
             </p>
           </div>
-          <button className="btn btn-accent" onClick={() => setShowCreate((s) => !s)}>
-            New project
-          </button>
+          <div className="row">
+            {socketStatus ? <LiveDot status={socketStatus} /> : null}
+            <button className="btn btn-accent" onClick={() => setShowCreate((s) => !s)}>
+              New project
+            </button>
+          </div>
+        </div>
+
+        <div style={{ margin: "0 0 1.25rem 0" }}>
+          <DashboardStats projects={projects} assigned={assigned} />
         </div>
 
         <ErrorBanner message={error} onRetry={load} onDismiss={() => setError("")} />
@@ -232,6 +242,7 @@ function DashboardInner() {
             <h2 style={{ margin: 0, marginBottom: "0.75rem", fontSize: "1.1rem" }}>Recent activity</h2>
             <ActivityFeed items={activity} />
           </div>
+        </div>
         </div>
       </main>
     </div>

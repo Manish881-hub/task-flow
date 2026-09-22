@@ -1,7 +1,7 @@
 import Head from "next/head";
 import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
-import Navbar from "../components/Navbar";
+import EfferdSidebar from "../components/dashboard/EfferdSidebar";
 import RequireAuth from "../components/RequireAuth";
 import EmptyState from "../components/EmptyState";
 import Skeleton from "../components/Skeleton";
@@ -51,10 +51,11 @@ function AssignedInner() {
   const visible = tasks.filter((t) => (filter === "all" ? true : t.status === filter));
 
   return (
-    <div className="page">
+    <div className="efferd-layout">
       <Head><title>Assigned to me — TaskFlow</title></Head>
-      <Navbar socketStatus={socketStatus} />
-      <main className="container main">
+      <EfferdSidebar />
+      <main className="efferd-main">
+        <div className="container main">
         <div className="spread" style={{ marginBottom: "1rem" }}>
           <div>
             <h1 style={{ marginBottom: "0.2rem" }}>Assigned to me</h1>
@@ -100,6 +101,7 @@ function AssignedInner() {
             ))}
           </div>
         )}
+        </div>
       </main>
     </div>
   );

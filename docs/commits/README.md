@@ -18,3 +18,5 @@ Short notes, one per commit, newest last:
 14. `Adopt blue theme with contrast fixes` — `14-blue-theme.md`
 15. `Remove dead CSS` — `15-dead-css.md`
 16. `Remove dead JS and Python imports` — `16-dead-imports.md`
+17. `Include actor names in activity` — `17-activity-names.md`
+18. `Rebuild app shell with real data` — `18-honest-shell.md`

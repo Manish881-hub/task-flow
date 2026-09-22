@@ -2,6 +2,7 @@ import Head from "next/head";
 import { AuthProvider } from "../lib/auth";
 import "../styles/globals.css";
 import "../styles/landing.css";
+import "../styles/efferd-dashboard.css";
 
 export default function App({ Component, pageProps }) {
   return (
