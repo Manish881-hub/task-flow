@@ -183,7 +183,7 @@ function ProjectInner() {
     <div className="efferd-layout">
       <Head><title>{project?.name ? `${project.name} — TaskFlow` : "Project — TaskFlow"}</title></Head>
       <EfferdSidebar currentProjectId={typeof id === "string" ? id : undefined} />
-      <main className="efferd-main efferd-dark-main">
+      <main className="efferd-main">
         <div className="container main">
         <ErrorBanner message={error} onRetry={loadProject} onDismiss={() => setError("")} />
 

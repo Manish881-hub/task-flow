@@ -10,7 +10,7 @@ import SearchPalette from "../SearchPalette";
  * Dashboard, Assigned, project boards — plus live search and account menu.
  * No placeholder tabs: every item navigates somewhere that exists.
  */
-export default function EfferdSidebar({ currentProjectId }) {
+export default function EfferdSidebar({ currentProjectId, socketStatus }) {
   const { user, logout } = useAuth();
   const router = useRouter();
   const [collapsed, setCollapsed] = useState(false);
@@ -151,6 +151,23 @@ export default function EfferdSidebar({ currentProjectId }) {
       )}
 
       <div className="efferd-sidebar-foot">
+        <div className="efferd-status-card" role="status" aria-label={`Sync status ${socketStatus || "Connecting"}`}>
+          <span className={`efferd-status-dot${socketStatus === "Live" ? " on" : ""}`} aria-hidden="true" />
+          {!collapsed && (
+            <span>
+              <span className="efferd-status-title">Live sync</span>
+              <span className="efferd-status-sub">{socketStatus || "Connecting"}</span>
+            </span>
+          )}
+        </div>
+        <div className="efferd-help-links">
+          {!collapsed && (
+            <>
+              <Link href="/#faq">Help Center</Link>
+              <a href="https://github.com/Manish881-hub/task-flow" target="_blank" rel="noopener noreferrer">Documentation</a>
+            </>
+          )}
+        </div>
         <div className="menu-wrap">
           <button
             type="button"
