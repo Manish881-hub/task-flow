@@ -28,7 +28,7 @@ function AssignedInner() {
     setState("loading");
     setError("");
     try {
-      const data = await apiGet("/api/v1/tasks/assigned");
+      const data = await apiGet("/api/v1/assigned");
       const list = Array.isArray(data) ? data : data?.items || data?.tasks || [];
       setTasks(list);
       setState("done");

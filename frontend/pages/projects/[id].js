@@ -56,8 +56,8 @@ function ProjectInner() {
     try {
       const [p, t, a] = await Promise.all([
         apiGet(`/api/v1/projects/${id}`),
-        apiGet(`/api/v1/projects/${id}/tasks?limit=200`),
-        apiGet(`/api/v1/projects/${id}/activity?limit=30`).catch(() => []),
+        apiGet(`/api/v1/projects/${id}/tasks?per_page=100`),
+        apiGet(`/api/v1/projects/${id}/activity?per_page=30`).catch(() => []),
       ]);
       setProject(p?.project || p);
       const list = Array.isArray(t) ? t : t?.items || t?.tasks || [];
@@ -78,8 +78,8 @@ function ProjectInner() {
     if (!id) return;
     try {
       const [t, a] = await Promise.all([
-        apiGet(`/api/v1/projects/${id}/tasks?limit=200`),
-        apiGet(`/api/v1/projects/${id}/activity?limit=30`).catch(() => []),
+        apiGet(`/api/v1/projects/${id}/tasks?per_page=100`),
+        apiGet(`/api/v1/projects/${id}/activity?per_page=30`).catch(() => []),
       ]);
       setTasks(Array.isArray(t) ? t : t?.items || t?.tasks || []);
       setActivity(Array.isArray(a) ? a : a?.items || a?.activity || []);
@@ -159,7 +159,7 @@ function ProjectInner() {
     // Optimistic move; rollback on failure.
     setTasks((cur) => cur.map((t) => (t.id === taskId ? { ...t, status: nextStatus } : t)));
     try {
-      await apiPatch(`/api/v1/tasks/${taskId}`, { status: nextStatus });
+      await apiPatch(`/api/v1/projects/${id}/tasks/${taskId}`, { status: nextStatus });
       refreshTasks();
     } catch (err) {
       setTasks((cur) => cur.map((t) => (t.id === taskId ? { ...t, status: prev.status } : t)));
@@ -249,6 +249,7 @@ function ProjectInner() {
                 <h2 style={{ fontSize: "1.1rem" }}>Backlog</h2>
                 <div className="toolbar">
                   <input
+                    id="backlog-search"
                     className="input search" placeholder="Search tasks…" value={search}
                     onChange={(e) => { setSearch(e.target.value); setPage(1); }} aria-label="Search tasks"
                   />

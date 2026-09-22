@@ -17,7 +17,7 @@ export default function InviteModal({ projectId, onClose, onInvited }) {
     }
     setSaving(true);
     try {
-      const res = await apiPost(`/api/v1/projects/${projectId}/invite`, { email: v });
+      const res = await apiPost(`/api/v1/projects/${projectId}/members`, { email: v });
       onInvited(res?.member || res);
     } catch (err) {
       setError(getErrorMessage(err));

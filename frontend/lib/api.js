@@ -35,6 +35,22 @@ export function clearAuthToken() {
 }
 
 // ---- Error type ----
+/**
+ * Unwrap the backend `{data}` envelope.
+ * Lists keep pagination: `meta`/`links` are attached to the returned value
+ * (arrays accept extra props in JS) so no caller loses paging info.
+ */
+export function unwrapEnvelope(body) {
+  if (body && typeof body === "object" && !Array.isArray(body) && "data" in body) {
+    const out = body.data;
+    if (out && typeof out === "object") {
+      if (body.meta !== undefined) out.meta = body.meta;
+      if (body.links !== undefined) out.links = body.links;
+    }
+    return out;
+  }
+  return body;
+}
 export class ApiError extends Error {
   constructor(status, body, message) {
     super(message || `Request failed (${status})`);
@@ -116,7 +132,9 @@ async function doRefresh() {
   }
   const data = await parseBody(res);
   // Backend may return { access_token, user } or { accessToken } — accept both.
-  const token = data && (data.access_token || data.accessToken || data.token);
+  // Refresh payload arrives in the {data} envelope; unwrap first.
+  const unwrapped = unwrapEnvelope(data);
+  const token = unwrapped && (unwrapped.access_token || unwrapped.accessToken || unwrapped.token);
   if (token) setAuthToken(token);
   return data;
 }
@@ -176,7 +194,7 @@ export async function api(path, opts = {}) {
     throw new ApiError(res.status, errBody);
   }
 
-  return parseBody(res);
+  return unwrapEnvelope(await parseBody(res));
 }
 
 export const apiGet = (path, opts) => api(path, { ...(opts || {}), method: "GET" });

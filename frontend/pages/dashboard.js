@@ -45,7 +45,7 @@ function DashboardInner() {
     try {
       const [projData, assignedData] = await Promise.all([
         apiGet("/api/v1/projects"),
-        apiGet("/api/v1/tasks/assigned").catch(() => []),
+        apiGet("/api/v1/assigned").catch(() => []),
       ]);
       const list = normalizeList(projData);
       setProjects(list);
@@ -55,7 +55,7 @@ function DashboardInner() {
       const recent = [];
       for (const p of list.slice(0, 3)) {
         try {
-          const a = await apiGet(`/api/v1/projects/${p.id}/activity?limit=5`);
+          const a = await apiGet(`/api/v1/projects/${p.id}/activity?per_page=5`);
           const items = Array.isArray(a) ? a : a?.items || a?.activity || [];
           recent.push(...items);
         } catch {}

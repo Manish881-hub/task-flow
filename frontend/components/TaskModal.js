@@ -47,7 +47,7 @@ export default function TaskModal({ projectId, task, members, onClose, onSaved, 
     if (!editing) return;
     let cancelled = false;
     setCommentsState("loading");
-    apiGet(`/api/v1/tasks/${task.id}/comments`)
+    apiGet(`/api/v1/projects/${projectId}/tasks/${task.id}/comments`)
       .then((data) => {
         if (cancelled) return;
         setComments(Array.isArray(data) ? data : data?.items || data?.comments || []);
@@ -93,7 +93,7 @@ export default function TaskModal({ projectId, task, members, onClose, onSaved, 
       let saved;
       if (editing) {
         const { apiPatch } = await import("../lib/api");
-        saved = await apiPatch(`/api/v1/tasks/${task.id}`, payload);
+        saved = await apiPatch(`/api/v1/projects/${projectId}/tasks/${task.id}`, payload);
       } else {
         saved = await apiPost(`/api/v1/projects/${projectId}/tasks`, payload);
       }
@@ -110,7 +110,7 @@ export default function TaskModal({ projectId, task, members, onClose, onSaved, 
     if (!window.confirm("Delete this task? This cannot be undone.")) return;
     setSaving(true);
     try {
-      await apiDelete(`/api/v1/tasks/${task.id}`);
+      await apiDelete(`/api/v1/projects/${projectId}/tasks/${task.id}`);
       onDeleted(task);
     } catch (err) {
       setSubmitError(getErrorMessage(err));
@@ -131,7 +131,7 @@ export default function TaskModal({ projectId, task, members, onClose, onSaved, 
       return;
     }
     try {
-      const created = await apiPost(`/api/v1/tasks/${task.id}/comments`, { content: text });
+      const created = await apiPost(`/api/v1/projects/${projectId}/tasks/${task.id}/comments`, { content: text });
       setComments((c) => [...c, created?.comment || created]);
       setCommentText("");
     } catch (err) {
