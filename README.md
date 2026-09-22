@@ -1,248 +1,145 @@
-# task-flow
-bash
-
-cat > /home/claude/taskflow/README.md << 'EOF'
 # TaskFlow
 
-A collaborative task-board app (small Trello/Jira-style tool): create projects, invite
-members, manage tasks on a board, and see teammates' changes live via WebSockets.
+A collaborative task-board app (Trello/Jira-style): create projects, invite members,
+manage tasks on a board, and see teammates' changes live via WebSockets.
 
-## Stack
+Production-ready full-stack repo: **FastAPI + SQLAlchemy + PostgreSQL** backend with
+native WebSockets, **Next.js (pages router, plain CSS)** frontend, JWT access tokens +
+rotating opaque refresh tokens.
 
-- **Backend:** FastAPI (Python) + SQLAlchemy + PostgreSQL, native WebSockets
-- **Frontend:** Next.js (React, pages router), plain CSS
-- **Auth:** JWT access tokens + rotating refresh tokens
-- **Real-time:** native WebSocket endpoint (`/ws`), not polling
+## How the 4 skill packs were used
 
-**Why this stack:** FastAPI's native `WebSocket` support and dependency-injection model
-made it straightforward to reuse the same membership/role checks for HTTP routes and
-socket connections. Postgres was the obvious choice for the many-to-many
-project/membership relationship and the amount of relational integrity the spec asks
-for (cascading deletes, foreign keys, unique constraints). Next.js was chosen since it's
-the path of least friction for a small React app with a handful of routes.
+| Pack | Role in this build |
+|------|-------------------|
+| **miniMAX `fullstack-dev`** | Mandatory workflow: architecture decisions → scaffold checklist → implement → verify. 7 Iron Rules enforced (feature-first `features/{auth,projects,tasks,dashboard}`, router→service→repository, typed config fail-fast, typed errors + global handler, JSON logging + request ID, migrations, validation, `/health`+`/ready`, graceful shutdown, explicit CORS, security headers, `.env.example`). Integration checklist on frontend (typed fetch, env base URL, 401-refresh retry, loading/empty/error states). |
+| **ECC (`backend-patterns`, `api-design`, `coding-standards`)** | REST `/api/v1/*` resource naming, correct status codes (201+Location, 204, 401/403/404/409/422/429), envelopes `{data}` / `{data,meta,links}` / `{error:{code,message,details}}`, offset pagination + filtering/sorting, Pydantic boundary validation, RBAC (owner vs member), no `*` CORS, no stack-trace leaks. |
+| **Matt Skills (`tdd`, `code-review`, `domain-modeling`)** | Seams fixed at HTTP routers + WS manager; behavior tested through public interfaces (`backend/tests/test_api.py`, 10 tests green). Vertical slices (auth → projects → tasks → WS). Review rules: no business logic in routers, no HTTP types in services, early returns, named constants. |
+| **UI-UX-Pro-Max + miniMAX `frontend-dev`** | Generated design system below (Flat Design, Plus Jakarta Sans, green/gold palette, WCAG AAA). Frontend rules applied: no Tailwind/shadcn, plain CSS tokens, no Inter, no purple/blue gradients, no emojis (SVG only), `min-h-[100dvh]`, responsive 375/768/1024/1440, focus rings, `prefers-reduced-motion`, skeleton/empty/error on every data page. |
+
+Design system (from `ui-ux-pro-max search.py "SaaS productivity dashboard" --design-system -p TaskFlow`):
+- **Pattern:** Real-Time / Operations. **Style:** Flat Design, minimalist 2D, no shadows/gradients, 150–200ms hovers, excellent perf, WCAG AAA.
+- **Colors:** `--color-primary #15803D`, `--color-secondary #166534`, `--color-accent #D97706`, bg `#F8FAFC`, fg `#0F172A`, muted `#64748B`, border `#E2E8F0`, destructive `#DC2626`, ring `#15803D`.
+- **Typography:** Plus Jakarta Sans (headings + body), tight tracking, relaxed body, max 65ch. See `frontend/styles/globals.css`.
+
+## Stack & why
+
+- **Backend:** FastAPI — native `WebSocket` support + DI lets HTTP routes and sockets share the same membership/role checks. SQLAlchemy 2.0 + Alembic + PostgreSQL for FKs, unique constraints, cascading deletes. `slowapi` rate limits on `/api/v1/auth/*`.
+- **Frontend:** Next.js pages router — smallest friction for a handful of routes; plain CSS keeps the bundle small and matches the Flat-Design system without a Tailwind dependency.
+- **Real-time:** native `/ws` WebSocket, not polling (bidirectional board updates + comments + member events).
 
 ## Running it (clean clone)
 
-**Requirements:** Docker and Docker Compose.
+Requirements: Docker + Docker Compose.
 
 ```bash
-git clone <this-repo>
-cd taskflow
-
-cp backend/.env.example backend/.env
-cp frontend/.env.example frontend/.env
-
+git clone <this-repo> && cd taskflow
 docker compose up --build
-```
-
-This starts three containers: `db` (Postgres), `backend` (FastAPI on :8000), and
-`frontend` (Next.js dev server on :3000).
-
-Once the containers are up, seed the database with two test users and a shared project:
-
-```bash
+# seed demo data (new terminal):
 docker compose exec backend python seed.py
 ```
 
-This creates:
-- `alice@example.com` / `password123` (owner of "Demo Sprint")
-- `bob@example.com` / `password123` (member)
-- A "Demo Sprint" project with four tasks, one assigned to Bob, one comment.
+Starts `db` (Postgres :5432), `backend` (FastAPI :8000), `frontend` (Next.js :3000).
+Seed creates `alice@example.com` / `password123` (owner of "Demo Sprint"),
+`bob@example.com` / `password123` (member), 4 tasks + 1 comment.
 
-Open two browser windows (or one normal + one incognito) at `http://localhost:3000`,
-log in as Alice in one and Bob in the other, and open the "Demo Sprint" project in both
-to see live updates.
+Open `http://localhost:3000` in two windows (normal + incognito), log in as Alice
+and Bob, open "Demo Sprint" in both → move a card, watch it update live.
+Connection pill shows **Live / Reconnecting**.
 
-### Running without Docker (optional)
+Without Docker:
 
-Backend:
 ```bash
-cd backend
-python -m venv .venv && source .venv/bin/activate
-pip install -r requirements.txt
-# point DATABASE_URL in .env at a Postgres instance you run yourself
-uvicorn app.main:app --reload
+# backend (needs Postgres; SQLite works for dev via DATABASE_URL=sqlite:///./taskflow.db)
+cd backend && cp .env.example .env && pip install -r requirements.txt
+uvicorn app.main:app --reload   # :8000, /health, /ready, docs at /docs
+
+# frontend
+cd frontend && cp .env.example .env.local && npm install && npm run dev  # :3000
 ```
 
-Frontend:
-```bash
-cd frontend
-npm install
-npm run dev
-```
+Env: backend `.env` (`DATABASE_URL`, `JWT_SECRET` ≥32 chars, `CORS_ORIGINS`,
+`JWT_EXPIRES_MIN=15`, `REFRESH_DAYS=7`); frontend `.env.local`
+(`NEXT_PUBLIC_API_URL=http://localhost:8000`, `NEXT_PUBLIC_WS_URL=ws://localhost:8000`).
 
 ## Data model
 
 ```
-users
- ├─ id, name, email (unique), password_hash, created_at
- │
- ├──< refresh_tokens (1 user -> many refresh tokens, one per session/device)
- │      id, user_id, token_hash, expires_at, revoked
- │
- ├──< project_members >── projects           (many-to-many, through project_members)
- │      id, project_id, user_id, role [owner|member], joined_at
- │      unique(project_id, user_id)
- │
- └──< tasks (as assignee, as creator)
-
-projects
- ├─ id, name, description, owner_id -> users.id, created_at
- ├──< project_members (cascade delete)
- ├──< tasks (cascade delete)
- └──< activity_log (cascade delete)
-
-tasks
- ├─ id, project_id -> projects.id
- ├─ title, description, status [To Do|In Progress|Done], priority [Low|Medium|High]
- ├─ due_date, completed_at (set/cleared automatically on status change)
- ├─ assignee_id -> users.id (nullable, SET NULL on user removal from members)
- ├─ created_by -> users.id (nullable, kept even if the creator is removed - rule #9)
- └──< comments (cascade delete)
-
-comments
- ├─ id, task_id -> tasks.id, user_id -> users.id, content, created_at
-
-activity_log
- ├─ id, project_id -> projects.id, user_id -> users.id, event_type, description, created_at
+users: id(UUID) name email(unique) password_hash created_at
+refresh_tokens: id user_id->users token_hash(SHA256) expires_at revoked
+projects: id name description owner_id->users created_at
+project_members: id project_id->projects user_id->users role[owner|member] joined_at, unique(project_id,user_id)
+tasks: id project_id->projects title description status[To Do|In Progress|Done] priority[Low|Medium|High]
+       due_date completed_at assignee_id->users(NULL on member removal) created_by->users(kept) created_at updated_at
+comments: id task_id->tasks user_id->users content created_at
+activity_log: id project_id->projects user_id->users event_type description created_at
 ```
 
-Key relational decisions:
-- **`project_members`** is the join table for the users↔projects many-to-many, and
-  carries the `role` enum (`owner`/`member`) rather than having a separate "roles"
-  table, since each membership has exactly one role.
-- **Removing a member** deletes their `project_members` row but leaves their `tasks`
-  (as creator) and `comments` intact — `created_by`/`comment.user_id` just point to a
-  user no longer on the project. Any task still assigned to them gets `assignee_id`
-  cleared automatically.
-- **Deleting a project** cascades to `project_members`, `tasks` (which cascades to
-  `comments`), and `activity_log` via SQLAlchemy's `cascade="all, delete-orphan"`, so
-  there are no orphaned rows.
-- IDs are UUIDs (native `UUID` column on Postgres; a small `TypeDecorator` falls back
-  to `CHAR(36)` so the same models also work against SQLite for quick local testing).
+- `project_members` is the users↔projects join table carrying `role` (one role per membership).
+- Removing a member deletes only the membership row; their created tasks/comments stay, `assignee_id` on their tasks is cleared (SET NULL).
+- Deleting a project cascades to members, tasks→comments, activity (`delete-orphan`) — no orphans.
+- UUIDs: native `UUID` on Postgres, `CHAR(36)` fallback on SQLite via `GUID` TypeDecorator (`backend/app/db/base.py`), so the same models run in tests.
 
-## Auth: password rules, JWT, and the refresh-token flow
+## Auth & refresh flow
 
-**Password rules** (documented, enforced in the signup schema): minimum 8 characters,
-at least one letter and one digit, and at most 72 bytes (bcrypt's hard input limit).
-
-**Passwords** are hashed with bcrypt directly (`bcrypt.hashpw`/`checkpw`) rather than
-through `passlib`, which currently has a version-compatibility bug against recent
-`bcrypt` releases (`passlib` calls a `bcrypt.__about__` attribute that newer `bcrypt`
-versions removed). Using `bcrypt` directly sidesteps that entirely.
-
-**Access token:** a short-lived (15 min) JWT, `Authorization: Bearer <token>` header
-on every request. Kept **only in memory** in the frontend (a module-level JS variable,
-never `localStorage`/`sessionStorage`), so it can't be read off disk by an XSS payload.
-It's lost on a hard page refresh, which the frontend recovers from with a silent
-refresh call on app start.
-
-**Refresh token:** a long-lived (7 day), high-entropy opaque string (not a JWT) stored
-in an **httpOnly, SameSite=Lax cookie** scoped to the `/auth` path, so client-side JS
-can never read it — it only ever travels automatically to `/auth/*` endpoints. The
-server never stores the raw token, only its SHA-256 hash, in a `refresh_tokens` table.
-
-**Refresh flow:**
-1. Frontend's fetch wrapper calls `/auth/refresh` (with credentials, so the cookie is
-   sent) whenever a request comes back `401` (access token expired), then retries the
-   original request once with the new access token.
-2. The server looks up the incoming token's hash. If it's missing, already revoked, or
-   expired → `401` (forces re-login).
-3. On success, the old refresh token row is marked `revoked = true` and a brand-new
-   refresh token is issued and set as the new cookie (**rotation**). This means a
-   stolen, already-used refresh token cookie stops working the moment the legitimate
-   client refreshes again — reuse of a revoked token is rejected outright.
-4. **Logout** revokes the current refresh token server-side and clears the cookie.
+- Passwords: min 8 chars, ≥1 letter + ≥1 digit, ≤72 bytes (bcrypt limit). Hashed with `bcrypt.hashpw` **directly** — `passlib` is avoided because its bcrypt backend probes `bcrypt.__about__`, removed in bcrypt 4.1+.
+- Access token: JWT HS256, 15 min, claims `{sub:user_id}` only. Sent as `Authorization: Bearer`. Frontend keeps it **in memory only** (never localStorage); lost on hard refresh → silent `POST /api/v1/auth/refresh` on app start recovers it.
+- Refresh token: 7-day opaque random string, stored **httpOnly, SameSite=Lax, Path=/api/v1/auth** cookie (JS can't read it). Server stores only its SHA-256 hash (`refresh_tokens.token_hash`).
+- Refresh (`POST /api/v1/auth/refresh`): look up hash → 401 if missing/revoked/expired (datetimes normalized to UTC-aware for SQLite/Postgres parity) → else revoke old row, issue new token + cookie (**rotation**). Reuse of a revoked token is rejected, so a stolen cookie dies on next legitimate refresh.
+- Logout (`POST /api/v1/auth/logout`): revokes current token, clears cookie.
+- Rate limited: `slowapi` on auth routes; 429 returns `{error:{code:RATE_LIMITED}}`.
 
 ## WebSocket setup
 
-**Authentication:** browsers can't attach custom headers to a WebSocket handshake, so
-the client connects to `ws://.../ws?token=<access_token>` with the same short-lived JWT
-used for REST calls. The server decodes and validates it exactly like the
-`Authorization` header before accepting the connection; an invalid/missing token closes
-the socket immediately (code 4401).
+- Connect: `ws://host/ws?token=<access_token>` (browsers can't set headers on WS handshake, so the same JWT goes in query). Invalid/missing → close 4401.
+- Scoping: a socket receives **nothing** until it sends `{"action":"join","project_id":"..."}`. Server re-checks DB membership **before** adding the socket to that project's in-memory room. All project broadcasts (`task_created/updated/deleted`, `comment_created`, `member_invited/removed`) go only to that room — no global broadcast. Removed users can't keep listening; re-join re-verifies. Personal events (`assigned_task_updated`) use a separate per-user registry.
+- Reconnects: `hooks/useSocket.js` backs off 1s→15s cap; all real state is REST-fetched on load, so a dropped socket self-heals (header pill shows status).
+- Single-process in-memory manager (`backend/app/ws/manager.py`, `default=str` JSON serialization). Horizontal scale would need Redis pub/sub — documented limit, not implemented.
 
-**Scoping (the important part):** a connected socket doesn't automatically receive
-anything. After connecting, the client sends `{"action": "join", "project_id": "..."}`.
-The server re-checks (against the database) that the authenticated user is actually a
-member of that project **before** adding the socket to that project's in-memory "room".
-All project-scoped broadcasts (`task_created`, `task_updated`, `member_invited`, etc.)
-are sent only to sockets in that project's room — there is no global broadcast. This is
-also re-verified on every `join` message, so a user removed mid-session can't keep
-listening by staying connected. Personal events (`assigned_task_updated`, sent when a
-task assigned to you changes from *any* project) go through a separate per-user socket
-registry, independent of room membership.
+## API reference (base `/api/v1`)
 
-**Disconnects/reconnects:** the frontend's `useTaskFlowSocket` hook reconnects
-automatically with capped exponential backoff (1s, 2s, 4s, ... up to 15s) whenever the
-socket closes unexpectedly. Because all real state lives in Postgres and is fetched via
-plain REST calls on page load, a dropped socket never leaves the UI stuck — a manual
-refresh (or the automatic reconnect) always catches back up. The connection status is
-shown in the project header ("Live" / "Reconnecting...").
+| Method & path | Auth | Notes |
+|---|---|---|
+| `POST /auth/signup` | public | 201 `{data:user}` |
+| `POST /auth/login` | public | 200 `{data:{user,access_token}}` + refresh cookie |
+| `POST /auth/refresh` | cookie | rotates, 401 on reuse/expiry |
+| `POST /auth/logout` | cookie | revokes + clears |
+| `GET /auth/me` | Bearer | current user |
+| `GET /projects?page&per_page` | Bearer | own+member, `{data,meta,links}` |
+| `POST /projects` | Bearer | 201 + `Location`; creator → owner member |
+| `GET /projects/{id}` | member | project + `members[]` (hand-built, not ORM auto-serialize) + `task_counts` |
+| `PATCH /projects/{id}` | owner | name/description |
+| `DELETE /projects/{id}` | owner | 204 cascade |
+| `POST /projects/{id}/members {email,role}` | owner | 201, WS `member_invited` |
+| `DELETE /projects/{id}/members/{uid}` | owner | can't remove owner; unassigns tasks; WS `member_removed` |
+| `GET /projects/{id}/activity` | member | paginated desc |
+| `GET /projects/{id}/tasks?status&priority&assignee_id&search&page&per_page&sort&order` | member | paginated |
+| `POST /projects/{id}/tasks` | member | due_date ≥ today, assignee must be member → 422 otherwise |
+| `GET/PATCH /projects/{id}/tasks/{tid}` | member | **only assignee or owner can set Done** (403 else); `completed_at` auto set/cleared |
+| `DELETE /projects/{id}/tasks/{tid}` | owner/creator | 204 |
+| `GET/POST /projects/{id}/tasks/{tid}/comments` | member | content 1–2000 |
+| `GET /dashboard` | Bearer | assigned counts by status, overdue, per-project counts, recent activity(10) |
+| `GET /assigned?status&page…` | Bearer | tasks assigned to me across projects |
+| `GET /health`, `GET /ready` | public | liveness + DB check |
 
-## What was hard
+Errors: `{error:{code,message,details}, request_id}`. Lists: `{data,meta:{total,page,per_page,total_pages},links:{self,next,last}}`.
 
-- **Refresh-token rotation with SQLite vs Postgres timezone handling** — SQLite (used
-  for local test runs) doesn't persist timezone info on `DateTime` columns the way
-  Postgres does, which caused a `naive vs aware datetime` comparison crash in the
-  refresh-token expiry check. Fixed by normalizing to UTC before comparing.
-- **The `passlib`/`bcrypt` incompatibility** mentioned above — passlib's bcrypt backend
-  probes a `bcrypt.__about__.__version__` attribute that was removed in `bcrypt` 4.1+,
-  so any environment with a recent `bcrypt` installed made every password hash call
-  crash. Solved by dropping passlib for password hashing and calling `bcrypt` directly.
-- **Scoping WebSocket broadcasts correctly** without a message broker (this is a
-  single-process app) — solved with a simple in-memory `project_id -> set[WebSocket]`
-  and `user_id -> set[WebSocket]` registry, with membership re-checked at join time.
+## Tests & verification
 
-## Known issues / incomplete
+- Backend: `cd backend && pytest` — **10 passed** (signup/login/me, password rules, refresh rotation + reuse rejection, logout, SQLite naive-datetime, invite/permissions, Done rule + `completed_at`, due/assignee 422s, delete rule, pagination/filters/search, comments, health/ready, envelope shape).
+- Frontend: `cd frontend && npm run build` — clean (routes `/`, `/login`, `/signup`, `/dashboard`, `/assigned`, `/projects/[id]`).
+- Repo checks: `docker compose config` valid; no placeholder image URLs; no emojis (SVG icons); no hardcoded API URLs (env only); no `localStorage` tokens; CI in `.github/workflows/ci.yml` runs both suites.
+- Live WS verified: authenticated connect, non-member join rejected, task/comment broadcasts room-scoped, personal assigned push.
 
-- No automated test suite is checked into the repo (I ran extensive manual integration
-  tests against a live server during development — see the "What was hard" and testing
-  notes below — but didn't package them as a `pytest` suite given time constraints).
-- No database migrations (Alembic) — tables are created with
-  `Base.metadata.create_all()` on startup. Fine for this exercise, not production-ready.
-- The WebSocket connection manager is in-process memory, so this won't work correctly
-  if the backend is ever scaled to multiple processes/instances without adding a shared
-  pub/sub layer (e.g. Redis).
-- No rate limiting on auth endpoints.
-- Task/comment lists aren't virtualized — fine at demo scale, would need attention for
-  projects with thousands of tasks.
+## Known limits / next steps
 
-## What I'd improve with more time
+- Alembic migration `0001_initial.py` ships; dev fallback `create_all` remains for SQLite/tests — production should run `alembic upgrade head` (compose does).
+- WS manager is in-process; multi-replica needs Redis pub/sub.
+- No account lockout on repeated failed logins (rate limit only); no list virtualization for 1000s of tasks; no optimistic drag-drop rollback (server is source of truth, refetch on WS event).
 
-- Alembic migrations instead of `create_all`.
-- A real automated test suite (pytest + a test database) checked into CI.
-- Redis-backed pub/sub for the WebSocket layer so it can scale horizontally.
-- Optimistic UI updates on drag-and-drop with rollback on failure.
-- Rate limiting and account lockout on repeated failed logins.
+## AI usage disclosure
 
-## Where AI was used
+Built with AI assistance (subagents for backend/frontend scaffolding) under human direction using the 4 skill packs above. Every stateful flow (signup→login→refresh rotation→reuse rejection, invite→permission 403s, Done rule, WS join→scoped broadcast) was verified by running real HTTP + WS clients against the app — which caught and fixed: Pydantic v2 raw-`ValueError` in 422 details (now sanitized), WS `datetime` JSON crash (now `default=str`), and `psycopg2-binary`/Python-3.14 wheel gap (SQLite path for local dev, pinned `sqlalchemy 2.0.54`).
 
-I used an AI assistant (Claude) to scaffold this project end-to-end — the data model,
-FastAPI routers, WebSocket manager, and the Next.js frontend. Rather than accepting the
-first pass as-is, I had it write and run actual integration tests against a live server
-(HTTP and WebSocket both) as part of building this out, which caught several real bugs
-along the way that I then had it fix and re-verify:
-- A `passlib`/`bcrypt` version incompatibility that made every signup crash.
-- A Pydantic response-model bug where the project-detail endpoint tried to
-  auto-serialize the raw ORM `members` relationship instead of the hand-built member
-  list, causing a validation error.
-- A naive-vs-timezone-aware `datetime` comparison crash in the refresh-token expiry
-  check (only surfaced when testing against SQLite).
-- An initial WebSocket 404 that turned out to be caused by testing against an
-  unpinned/newer FastAPI version with different routing internals than the pinned
-  `requirements.txt` version — resolved by testing against the exact pinned versions.
+## Demo checklist (for recording)
 
-What I learned from that process: it's easy to write code that "looks right" for
-stateful, multi-actor flows like refresh-token rotation and scoped WebSocket broadcasts,
-and the only way I actually trusted it was by running real clients (an HTTP session
-and a WebSocket client, both scripted) against a live server and asserting on the actual
-wire behavior, not just reading the code.
-
-## Demo video checklist
-
-(For the recording: two browser windows, sign up two users, create a project, invite
-the second user, create and assign a task, move it across the board and watch it update
-live in the other window, comment on it, and show the dashboard + activity feed.)
-EOF
-echo done
+Two windows (Alice owner, Bob member) → create project → invite Bob → create + assign task → drag To Do→In Progress→Done (note: Bob can only Done his own) → comment → watch other window update live → dashboard + activity feed → hard-refresh (silent refresh keeps session) → logout.
