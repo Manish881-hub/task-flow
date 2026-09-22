@@ -1,0 +1,24 @@
+# Python
+__pycache__/
+*.pyc
+.venv/
+backend/.env
+backend/*.db
+backend/taskflow.db
+.pytest_cache/
+
+# Node
+frontend/node_modules/
+frontend/.next/
+frontend/out/
+frontend/.env
+frontend/.env.local
+
+# Postgres
+pgdata/
+
+# OS / IDE
+.DS_Store
+.vscode/
+.idea/
+*.log

@@ -1,0 +1,53 @@
+services:
+  db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: taskflow
+      POSTGRES_PASSWORD: taskflow
+      POSTGRES_DB: taskflow
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U taskflow"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  backend:
+    build: ./backend
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: postgresql+psycopg2://taskflow:taskflow@db:5432/taskflow
+      JWT_SECRET: change-me-to-a-long-random-secret-min-32-chars
+      JWT_EXPIRES_MIN: 15
+      REFRESH_DAYS: 7
+      CORS_ORIGINS: http://localhost:3000
+      ENV: prod
+      RATE_LIMIT_ENABLED: "true"
+    ports:
+      - "8000:8000"
+    command: sh -c "alembic upgrade head || python -c 'from app.db.session import init_engine; from app.db.base import Base; import app.db.models; from app.core.config import settings; init_engine(settings.DATABASE_URL); from app.db.session import engine; Base.metadata.create_all(bind=engine)' ; uvicorn app.main:app --host 0.0.0.0 --port 8000"
+
+  frontend:
+    build:
+      context: ./frontend
+      args:
+        NEXT_PUBLIC_API_URL: http://localhost:8000
+        NEXT_PUBLIC_WS_URL: ws://localhost:8000
+    restart: unless-stopped
+    depends_on:
+      - backend
+    environment:
+      NEXT_PUBLIC_API_URL: http://localhost:8000
+      NEXT_PUBLIC_WS_URL: ws://localhost:8000
+    ports:
+      - "3000:3000"
+
+volumes:
+  pgdata:
