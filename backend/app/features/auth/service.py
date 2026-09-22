@@ -21,7 +21,10 @@ from app.features.auth import repository as repo
 def signup(db: Session, name: str, email: str, password: str):
     if repo.get_user_by_email(db, email):
         raise ConflictError("Email already registered")
-    return repo.create_user(db, name, email, hash_password(password))
+    user = repo.create_user(db, name, email, hash_password(password))
+    token = new_refresh_token()
+    repo.create_refresh(db, user.id, hash_token(token), refresh_expiry())
+    return user, token, create_access_token(str(user.id))
 
 
 def login(db: Session, email: str, password: str):

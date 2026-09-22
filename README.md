@@ -99,7 +99,7 @@ activity_log: id project_id->projects user_id->users event_type description crea
 
 | Method & path | Auth | Notes |
 |---|---|---|
-| `POST /auth/signup` | public | 201 `{data:user}` |
+| `POST /auth/signup` | public | 201 `{data:{user,access_token}}` + refresh cookie (logs you in) |
 | `POST /auth/login` | public | 200 `{data:{user,access_token}}` + refresh cookie |
 | `POST /auth/refresh` | cookie | rotates, 401 on reuse/expiry |
 | `POST /auth/logout` | cookie | revokes + clears |

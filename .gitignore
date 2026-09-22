@@ -2,6 +2,9 @@
 __pycache__/
 *.pyc
 .venv/
+# Secrets (never commit)
+.env.local
+*.local
 backend/.env
 backend/*.db
 backend/taskflow.db

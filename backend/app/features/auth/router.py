@@ -1,7 +1,8 @@
 """Auth controller: parse request, call service, format response."""
-from __future__ import annotations
 
-from fastapi import APIRouter, Depends, Request, Response
+from typing import Annotated
+
+from fastapi import APIRouter, Body, Depends, Request, Response
 from slowapi import Limiter
 from slowapi.util import get_remote_address
 from sqlalchemy.orm import Session
@@ -43,14 +44,15 @@ def _clear_refresh_cookie(response: Response) -> None:
 
 @router.post("/signup", status_code=201)
 @_limit
-def signup(request: Request, body: SignupIn, db: Session = Depends(get_db)):
-    user = svc.signup(db, body.name, body.email, body.password)
-    return {"data": user_out(user)}
+def signup(request: Request, response: Response, body: Annotated[SignupIn, Body()], db: Session = Depends(get_db)):
+    user, refresh, access = svc.signup(db, body.name, body.email, body.password)
+    _set_refresh_cookie(response, refresh)
+    return {"data": {"user": user_out(user), "access_token": access}}
 
 
 @router.post("/login")
 @_limit
-def login(request: Request, response: Response, body: LoginIn, db: Session = Depends(get_db)):
+def login(request: Request, response: Response, body: Annotated[LoginIn, Body()], db: Session = Depends(get_db)):
     user, refresh, access = svc.login(db, body.email, body.password)
     _set_refresh_cookie(response, refresh)
     return {"data": {"user": user_out(user), "access_token": access}}
