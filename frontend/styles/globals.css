@@ -1,27 +1,33 @@
 /* TaskFlow design system — Flat, minimalist, 2D. No shadows/gradients.
-   Primary: Fjord Signal #2596BE. Text-safe darks for AA, tints for fills.
-   Signal green #05FF1A is fills/dots ONLY (1.37:1 on white); text uses #03800D+. */
+   Palette (ColorHunt warm set): orange #E87F24 primary, yellow #FFC81E CTA
+   (dark text ONLY, 11.5:1), cream #EFEFDD paper, crimson #F73A5C danger.
+   White text only on shade >=30% orange / >=20% crimson (measured AA). */
 :root {
-  --color-primary: #2596be;
-  --color-primary-strong: #1e7898; /* white text 5.01:1 AA */
-  --color-primary-hover: #1a6985; /* white text 6.17:1 */
-  --color-secondary: #165a72; /* deep fjord */
-  --color-primary-soft: #d3eaf2; /* fills, dark text 14.3:1 */
-  --color-primary-faint: #e9f4f8; /* page washes */
-  --color-accent: #d97706;
-  --color-accent-hover: #b45309;
-  --color-bg: #f8fafc;
+  --color-primary: #e87f24;
+  --color-primary-strong: #a25919; /* white text 5.28:1 AA */
+  --color-primary-hover: #8b4c16; /* white text 6.68:1 */
+  --color-secondary: #8b4c16; /* deep ember for text accents */
+  --color-primary-soft: #fae5d3; /* fills, dark text 14.6:1 */
+  --color-primary-faint: #fdf2e9; /* page washes */
+  --color-accent: #ffc81e; /* CTA fill, ALWAYS dark text 11.5:1 */
+  --color-accent-hover: #e6b41b;
+  --color-accent-ink: #0f172a;
+  --color-bg: #efefdd;
   --color-card: #ffffff;
   --color-fg: #0f172a;
-  --color-muted: #64748b;
-  --color-border: #e2e8f0;
-  --color-danger: #dc2626;
-  --color-ring: #1a6985;
-  --color-success: #03800d; /* text-safe green, white 5.13:1 */
-  --color-success-strong: #02660a; /* white 7.22:1 */
-  --color-success-bright: #05ff1a; /* graphic fills + live dot ONLY */
-  --color-success-soft: #e6ffe8; /* success fills */
-  --color-success-border: #9bffa3;
+  --color-muted: #526274; /* 4.5:1+ on cream, verified */
+  --color-border: #e4ddc4;
+  --color-danger: #c62e4a; /* white text 5.40:1 AA */
+  --color-danger-text: #b92c45; /* on soft fills 4.88:1 AA */
+  --color-danger-base: #f73a5c; /* fills, large text, borders */
+  --color-danger-soft: #fee1e7;
+  --color-danger-border: #fcb0be;
+  --color-ring: #a25919;
+  --color-success: #8b4c16; /* done states in ember (palette has no green) */
+  --color-success-strong: #8b4c16;
+  --color-success-bright: #e87f24; /* graphic fills + live dot */
+  --color-success-soft: #fae5d3;
+  --color-success-border: #e87f24;
   --radius-sm: 8px;
   --radius-md: 16px;
   --radius-lg: 24px;
@@ -120,6 +126,12 @@ a:hover { color: var(--color-primary-hover); }
   justify-content: center;
   font-weight: 800;
 }
+.brand-logo-img {
+  width: 32px; height: 32px;
+  border-radius: 8px;
+  object-fit: cover;
+  display: block;
+}
 .nav-links { display: flex; align-items: center; gap: 0.5rem; }
 .nav-link {
   padding: 0.5rem 0.8rem;
@@ -145,8 +157,8 @@ a:hover { color: var(--color-primary-hover); }
   color: var(--color-muted);
   background: var(--color-card);
 }
-.live-dot { width: 8px; height: 8px; border-radius: 999px; background: #cbd5e1; }
-/* Bright signal fill carries the pop; the dark border carries the contrast (5.13:1). */
+.live-dot { width: 8px; height: 8px; border-radius: 999px; background: #d9cfb0; }
+/* Ember fill carries the pop; the deep border carries the contrast. */
 .live-dot.on { background: var(--color-success-bright); border: 2px solid var(--color-success); }
 .live-dot.busy { background: var(--color-accent); }
 
@@ -195,12 +207,12 @@ a:hover { color: var(--color-primary-hover); }
 .btn:disabled { opacity: 0.6; cursor: not-allowed; }
 .btn-primary { background: var(--color-primary-strong); color: #fff; }
 .btn-primary:hover { background: var(--color-primary-hover); }
-.btn-accent { background: var(--color-accent); color: #fff; }
-.btn-accent:hover { background: var(--color-accent-hover); }
+.btn-accent { background: var(--color-accent); color: var(--color-accent-ink); }
+.btn-accent:hover { background: var(--color-accent-hover); color: var(--color-accent-ink); }
 .btn-ghost { background: transparent; color: var(--color-fg); border-color: var(--color-border); }
 .btn-ghost:hover { background: var(--color-bg); }
 .btn-danger { background: transparent; color: var(--color-danger); border-color: var(--color-border); }
-.btn-danger:hover { background: #fef2f2; border-color: var(--color-danger); }
+.btn-danger:hover { background: var(--color-danger-soft); border-color: var(--color-danger); }
 .btn-sm { padding: 0.4rem 0.7rem; font-size: 0.82rem; border-radius: 10px; }
 .btn-block { width: 100%; }
 
@@ -217,7 +229,7 @@ a:hover { color: var(--color-primary-hover); }
   width: 100%;
   transition: border-color var(--dur) var(--ease), opacity var(--dur) var(--ease);
 }
-.input:hover, .select:hover, .textarea:hover { border-color: #cbd5e1; }
+.input:hover, .select:hover, .textarea:hover { border-color: #d9cfb0; }
 .textarea { min-height: 96px; resize: vertical; }
 .form-error { color: var(--color-danger); font-size: 0.82rem; font-weight: 600; }
 .form-hint { color: var(--color-muted); font-size: 0.82rem; }
@@ -237,9 +249,9 @@ a:hover { color: var(--color-primary-hover); }
   color: var(--color-muted);
 }
 .badge-green { background: var(--color-success-soft); border-color: var(--color-success-border); color: var(--color-success); }
-.badge-gold { background: #fffbeb; border-color: #fde68a; color: #92400e; }
+.badge-gold { background: var(--color-accent); border-color: #a68214; color: var(--color-accent-ink); }
 .badge-slate { background: var(--color-bg); }
-.badge-red { background: #fef2f2; border-color: #fecaca; color: var(--color-danger); }
+.badge-red { background: var(--color-danger-soft); border-color: var(--color-danger-border); color: var(--color-danger-text); }
 
 /* Board */
 .board { display: grid; gap: 1rem; grid-template-columns: 1fr; }
@@ -314,9 +326,9 @@ a:hover { color: var(--color-primary-hover); }
 
 /* Banner / empty / skeleton */
 .banner {
-  border: 1px solid #fecaca;
-  background: #fef2f2;
-  color: #991b1b;
+  border: 1px solid var(--color-danger-border);
+  background: var(--color-danger-soft);
+  color: var(--color-danger-text);
   border-radius: 12px;
   padding: 0.8rem 1rem;
   font-weight: 600;
@@ -417,6 +429,7 @@ a:hover { color: var(--color-primary-hover); }
 .brand-btn:hover { background: var(--color-bg); }
 .brand-btn:active { transform: scale(0.98); }
 .brand-wordmark { letter-spacing: -0.02em; }
+.brand-logo-img { width: 32px; height: 32px; border-radius: 10px; display: block; flex: none; }
 @media (max-width: 420px) { .brand-wordmark { display: none; } }
 .nav-search { display: none; margin-left: 1.5rem; }
 @media (min-width: 1024px) { .nav-search { display: block; } }

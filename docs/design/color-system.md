@@ -1,68 +1,55 @@
-# TaskFlow Color System — Fjord Signal
+# TaskFlow Color System — Warm Set (ColorHunt)
 
-Primary **#2596BE** (RGB 37, 150, 190 · HSL 196°, 67%, 45%).
-Accent **#05FF1A** signal green (graphic fills + live dot ONLY — 1.37:1 on white,
-never body text). Ratios computed programmatically (WCAG relative luminance).
+Supersedes the Fjord Signal system. Palette: **#E87F24** orange primary,
+**#FFC81E** yellow CTA (dark text ONLY, 11.5:1), **#EFEFDD** cream paper,
+**#F73A5C** crimson danger. All ratios measured programmatically (WCAG).
 
-## Fjord tints (mix with white) — white-text | dark-text(#0F172A)
+## Base readings (white / dark #0F172A / cream)
 
-| % | Hex | White | Dark |
+| Hex | White | Dark | Cream | Role |
+|---|---|---|---|---|
+| #E87F24 | 2.80 | 6.37 | 2.41 | brand, large text, icons, borders — NOT body text |
+| #FFC81E | 1.55 | 11.50 | 1.33 | CTA fills with dark text only |
+| #EFEFDD | 1.16 | 15.35 | 1.00 | page background |
+| #F73A5C | 3.67 | 4.86 | 3.16 | fills, large text, borders — NOT body text |
+
+## Orange shades (white text) / tints (dark text)
+
+| Shade | Hex | White | Tint | Hex | Dark |
+|---|---|---|---|---|---|
+| 10% | #D17220 | 3.42 | 70% | #F8D9BD | 13.31 |
+| 20% | #BA661D | 4.19 | 80% | #FAE5D3 | 14.63 |
+| 30% | #A25919 | 5.28 AA | 90% | #FDF2E9 | 16.20 |
+| 40% | #8B4C16 | 6.68 AA | | | |
+
+## Danger scale
+
+| Hex | White | On soft #FEE1E7 | Role |
 |---|---|---|---|
-| 0 | #2596BE | 3.40 | 5.26 |
-| 10 | #3BA0C4 | 3.00 | 5.96 |
-| 20 | #51ABCB | 2.61 | 6.83 |
-| 30 | #66B6D2 | 2.29 | 7.81 |
-| 40 | #7CC0D8 | 2.02 | 8.83 |
-| 50 | #92CADE | 1.79 | 9.97 |
-| 60 | #A8D5E5 | 1.58 | 11.32 |
-| 70 | #BEE0EC | 1.39 | 12.81 |
-| 80 | #D3EAF2 | 1.25 | 14.30 |
-| 90 | #E9F4F8 | 1.12 | 15.95 |
+| #F73A5C | 3.67 | — | fills, borders, large text |
+| #C62E4A | 5.40 AA | — | buttons, body text on white |
+| #B92C45 | — | 4.88 AA | text on soft fills |
 
-## Fjord shades (mix with black) — white-text ratio
+## Verified text pairs in use
 
-| % | Hex | White |
-|---|---|---|
-| 0 | #2596BE | 3.40 |
-| 10 | #2187AB | 4.10 |
-| 20 | #1E7898 | 5.01 AA |
-| 30 | #1A6985 | 6.17 AA |
-| 40 | #165A72 | 7.67 AA |
-| 50 | #124B5F | 9.56 AAA |
-| 60 | #0F3C4C | 11.86 |
-
-## Harmonies (same-lightness samples)
-
-| Harmony | Hex | White | Note |
-|---|---|---|---|
-| Complement | #D2582D | 4.06 | burnt orange; gold CTA #D97706 lives nearby — keep it |
-| Analog −30° | #2DD2AB | 1.92 | decorative only |
-| Analog +30° | #2D54D2 | 6.34 | info links alt |
-| Triad 1 | #D22DA7 | 4.49 | sparing highlights |
-| Triad 2 | #A7D22D | 1.76 | decorative only |
-| Split 1 | #D22D54 | 4.95 | danger adjacent (danger stays #DC2626) |
-| Split 2 | #D2AB2D | 2.19 | decorative only |
-
-## Signal green roles
-
-| Hex | White | Dark | Role |
-|---|---|---|---|
-| #05FF1A | 1.37 | 13.03 | live dot fill (2px #03800D border carries contrast), graphic fills |
-| #03800D | 5.13 | 3.48 | success text, badges, checks |
-| #02660A | 7.22 | 2.47 | strong success emphasis |
-| #9BFFA3 / #E6FFE8 | — | 12+ | badge/border/fill tints |
+muted #526274/cream 5.38 · secondary #8B4C16/cream 5.75 · ring #A25919/cream
+4.54 · done #8B4C16/soft 5.48 · gold border #A68214/white 3.61 (UI) ·
+danger text #B92C45/soft 4.88.
 
 ## Token map (`styles/globals.css`)
 
-`--color-primary #2596BE` brand · `--color-primary-strong #1E7898` buttons/links ·
-`--color-primary-hover #1A6985` · `--color-secondary #165A72` ·
-`--color-primary-soft #D3EAF2` / `-faint #E9F4F8` fills ·
-`--color-accent #D97706` CTA (complement-adjacent) · `--color-ring #1A6985` ·
-`--color-success #03800D` / `-strong #02660A` / `-bright #05FF1A` / `-soft #E6FFE8` /
-`-border #9BFFA3`.
+`--color-primary #E87F24` · `-strong #A25919` (buttons/links) ·
+`-hover/-secondary #8B4C16` · `-soft #FAE5D3` / `-faint #FDF2E9` fills ·
+`--color-accent #FFC81E` + `-ink #0F172A` + `-hover #E6B41B` ·
+`--color-bg #EFEFDD`, card `#FFFFFF`, `--color-muted #526274`,
+`--color-border #E4DDC4` · `--color-danger #C62E4A` / `-base #F73A5C` /
+`-text #B92C45` / `-soft #FEE1E7` / `-border #FCB0BE` · `--color-ring #A25919` ·
+success/done in ember (`--color-success*` = orange family, no green).
 
 ## Rules
 
-1. White body text only on shade ≥20% (#1E7898+). Base #2596BE is large-text/icons/borders only.
-2. Bright green never carries meaning alone — always paired with dark border or text label.
-3. Tints = backgrounds/highlights; shades = hover/ depth. Same as the green scale discipline.
+1. White body text only on orange shade ≥30% / crimson shade ≥20%.
+2. Yellow never carries white text; always pairs with dark ink.
+3. Done/success live in the ember family — palette has no green by decision;
+   restore a green only if status semantics prove unreadable in testing.
+4. Tints = fills, shades = hover/depth, same discipline as before.
