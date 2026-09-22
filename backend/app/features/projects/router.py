@@ -9,7 +9,7 @@ from sqlalchemy.orm import Session
 
 from app.core.deps import get_current_user
 from app.core.errors import NotFoundError
-from app.db.models import ActivityLog, Project
+from app.db.models import ActivityLog, Project, User
 from app.db.session import get_db
 from app.features.projects import repository as repo
 from app.features.projects import service as svc
@@ -169,11 +169,17 @@ def project_activity(
     q = db.query(ActivityLog).filter(ActivityLog.project_id == pid).order_by(ActivityLog.created_at.desc())
     total = q.count()
     rows = q.offset((page - 1) * per_page).limit(per_page).all()
+    names = {}
+    ids = {r.user_id for r in rows}
+    if ids:
+        for u in db.query(User).filter(User.id.in_(ids)).all():
+            names[u.id] = u.name
     items = [
         {
             "id": str(r.id),
             "project_id": str(r.project_id),
             "user_id": str(r.user_id),
+            "user_name": names.get(r.user_id),
             "event_type": r.event_type,
             "description": r.description,
             "created_at": r.created_at,
