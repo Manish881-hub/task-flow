@@ -152,10 +152,10 @@ export default function Navbar({ socketStatus }) {
             </>
           ) : (
             <>
-              <Link href="/login" className={`nav-link${isActive("/login") ? " active" : ""}`}>
+              <Link href="/login" className="nav-link">
                 Log in
               </Link>
-              <Link href="/signup" className="btn btn-accent btn-sm">
+              <Link href="/signup" className="btn btn-primary btn-sm">
                 Get started
               </Link>
             </>
@@ -206,8 +206,8 @@ export default function Navbar({ socketStatus }) {
               </>
             ) : (
               <>
-                <Link href="/login" className={`mobile-item${isActive("/login") ? " active" : ""}`}>Log in</Link>
-                <Link href="/signup" className="btn btn-accent btn-block">Get started</Link>
+                <Link href="/login" className="mobile-item">Log in</Link>
+                <Link href="/signup" className="btn btn-primary btn-block">Get started</Link>
               </>
             )}
           </nav>

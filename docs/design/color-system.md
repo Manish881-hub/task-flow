@@ -1,55 +1,39 @@
-# TaskFlow Color System — Warm Set (ColorHunt)
+# TaskFlow Color System — Blue (landing-matched)
 
-Supersedes the Fjord Signal system. Palette: **#E87F24** orange primary,
-**#FFC81E** yellow CTA (dark text ONLY, 11.5:1), **#EFEFDD** cream paper,
-**#F73A5C** crimson danger. All ratios measured programmatically (WCAG).
+Supersedes the warm ColorHunt set per direction change. Primary **#1D70F5**
+(royal blue, shared with the landing theme), soft fills, green success,
+red danger. All text pairs measured programmatically (WCAG).
 
-## Base readings (white / dark #0F172A / cream)
+## Verified text pairs (all ≥ 4.5:1 AA unless noted)
 
-| Hex | White | Dark | Cream | Role |
-|---|---|---|---|---|
-| #E87F24 | 2.80 | 6.37 | 2.41 | brand, large text, icons, borders — NOT body text |
-| #FFC81E | 1.55 | 11.50 | 1.33 | CTA fills with dark text only |
-| #EFEFDD | 1.16 | 15.35 | 1.00 | page background |
-| #F73A5C | 3.67 | 4.86 | 3.16 | fills, large text, borders — NOT body text |
-
-## Orange shades (white text) / tints (dark text)
-
-| Shade | Hex | White | Tint | Hex | Dark |
-|---|---|---|---|---|---|
-| 10% | #D17220 | 3.42 | 70% | #F8D9BD | 13.31 |
-| 20% | #BA661D | 4.19 | 80% | #FAE5D3 | 14.63 |
-| 30% | #A25919 | 5.28 AA | 90% | #FDF2E9 | 16.20 |
-| 40% | #8B4C16 | 6.68 AA | | | |
-
-## Danger scale
-
-| Hex | White | On soft #FEE1E7 | Role |
-|---|---|---|---|
-| #F73A5C | 3.67 | — | fills, borders, large text |
-| #C62E4A | 5.40 AA | — | buttons, body text on white |
-| #B92C45 | — | 4.88 AA | text on soft fills |
-
-## Verified text pairs in use
-
-muted #526274/cream 5.38 · secondary #8B4C16/cream 5.75 · ring #A25919/cream
-4.54 · done #8B4C16/soft 5.48 · gold border #A68214/white 3.61 (UI) ·
-danger text #B92C45/soft 4.88.
+| Pair | Ratio |
+|---|---|
+| white on `#155ECC` (buttons, links) | 5.99 |
+| white on `#1D70F5` | 4.48 (hover only, large/bold) |
+| `#155ECC` on soft `#EEF5FF` (active nav, avatars) | 5.46 |
+| muted `#64748B` on `#F8FAFC` | 4.76 |
+| slate `#475569` on `#F1F5F9` (badges, counts) | 7+ |
+| success `#047857` on `#ECFDF5` (was `#059669` at 3.58 — fixed) | 5.21 |
+| gold `#B45309` on `#FFFBEB` | 4.84 |
+| danger `#DC2626` on white/cards (was `#EF4444` at 3.76 — fixed) | 4.83 |
+| danger `#DC2626` on soft `#FEE2E2` (banner) | ~4.6 |
+| live border `#047857` on white (was `#059669` at 3.77 — fixed) | 5.48 |
 
 ## Token map (`styles/globals.css`)
 
-`--color-primary #E87F24` · `-strong #A25919` (buttons/links) ·
-`-hover/-secondary #8B4C16` · `-soft #FAE5D3` / `-faint #FDF2E9` fills ·
-`--color-accent #FFC81E` + `-ink #0F172A` + `-hover #E6B41B` ·
-`--color-bg #EFEFDD`, card `#FFFFFF`, `--color-muted #526274`,
-`--color-border #E4DDC4` · `--color-danger #C62E4A` / `-base #F73A5C` /
-`-text #B92C45` / `-soft #FEE1E7` / `-border #FCB0BE` · `--color-ring #A25919` ·
-success/done in ember (`--color-success*` = orange family, no green).
+`--color-primary #1D70F5` (brand, large text, borders, focus glow) ·
+`-strong #155ECC` (buttons, links, active states) · `-hover #1249A8` ·
+`-secondary #0284C7` · `-soft #EEF5FF` / `-faint #F8FAFF` fills ·
+`--color-accent` mirrors primary (CTA) · `--color-bg #F8FAFC`, card `#FFFFFF`,
+`--color-muted #64748B`, `--color-border #E2E8F0` · danger `#DC2626` /
+`-text #DC2626` / `-base #EF4444` / `-soft #FEE2E2` / `-border #FCA5A5` ·
+success `#059669` fills/icons, `-strong #047857` text, `-soft #ECFDF5`,
+`-border #A7F3D0` · `--color-ring #1D70F5`.
 
 ## Rules
 
-1. White body text only on orange shade ≥30% / crimson shade ≥20%.
-2. Yellow never carries white text; always pairs with dark ink.
-3. Done/success live in the ember family — palette has no green by decision;
-   restore a green only if status semantics prove unreadable in testing.
-4. Tints = fills, shades = hover/depth, same discipline as before.
+1. Body text uses `-strong` variants or darker, never base blue/red/green.
+2. Bright fills (`#10B981` dot) always pair with a dark border + text label.
+3. Soft pill buttons + shadows are the theme idiom (flat rule retired with it).
+4. `btn-accent` currently duplicates `btn-primary` — intentional for now;
+   diverge them if a second CTA color is ever needed.
