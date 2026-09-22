@@ -16,3 +16,5 @@ Short notes, one per commit, newest last:
 12. `Apply warm ColorHunt palette` — `12-warm-palette.md`
 13. `Add TaskFlow landing` — `13-taskflow-landing.md`
 14. `Adopt blue theme with contrast fixes` — `14-blue-theme.md`
+15. `Remove dead CSS` — `15-dead-css.md`
+16. `Remove dead JS and Python imports` — `16-dead-imports.md`

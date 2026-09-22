@@ -10,7 +10,7 @@ from sqlalchemy.orm import Session
 
 from app.core.deps import get_current_user
 from app.core.errors import ForbiddenError, NotFoundError
-from app.db.models import Comment, ProjectMember, Task, User
+from app.db.models import Task, User
 from app.db.session import get_db
 from app.features.projects import repository as prepo
 from app.features.tasks import repository as repo

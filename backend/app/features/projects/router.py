@@ -8,7 +8,7 @@ from fastapi import APIRouter, Depends, Query, Response
 from sqlalchemy.orm import Session
 
 from app.core.deps import get_current_user
-from app.core.errors import ForbiddenError, NotFoundError
+from app.core.errors import NotFoundError
 from app.db.models import ActivityLog, Project
 from app.db.session import get_db
 from app.features.projects import repository as repo

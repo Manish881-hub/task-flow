@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { apiDelete, apiGet, apiPost, getErrorMessage } from "../lib/api";
+import { apiDelete, apiGet, apiPatch, apiPost, getErrorMessage } from "../lib/api";
 
 const STATUSES = ["To Do", "In Progress", "Done"];
 const PRIORITIES = ["Low", "Medium", "High"];
@@ -92,7 +92,6 @@ export default function TaskModal({ projectId, task, members, onClose, onSaved, 
     try {
       let saved;
       if (editing) {
-        const { apiPatch } = await import("../lib/api");
         saved = await apiPatch(`/api/v1/projects/${projectId}/tasks/${task.id}`, payload);
       } else {
         saved = await apiPost(`/api/v1/projects/${projectId}/tasks`, payload);

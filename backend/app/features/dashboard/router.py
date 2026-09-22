@@ -10,7 +10,6 @@ from app.core.deps import get_current_user
 from app.db.base import ensure_aware
 from app.db.models import ActivityLog, Project, ProjectMember, Task
 from app.db.session import get_db
-from app.features.auth.schemas import user_out
 
 router = APIRouter(prefix="/api/v1/dashboard", tags=["dashboard"])
 

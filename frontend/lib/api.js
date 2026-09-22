@@ -9,7 +9,7 @@
  * - No hardcoded URLs — everything resolves through BASE_URL / WS_BASE.
  */
 
-export const BASE_URL =
+const BASE_URL =
   (process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000").replace(/\/$/, "");
 
 export function getWsBase() {
@@ -40,7 +40,7 @@ export function clearAuthToken() {
  * Lists keep pagination: `meta`/`links` are attached to the returned value
  * (arrays accept extra props in JS) so no caller loses paging info.
  */
-export function unwrapEnvelope(body) {
+function unwrapEnvelope(body) {
   if (body && typeof body === "object" && !Array.isArray(body) && "data" in body) {
     const out = body.data;
     if (out && typeof out === "object") {
@@ -200,5 +200,4 @@ export async function api(path, opts = {}) {
 export const apiGet = (path, opts) => api(path, { ...(opts || {}), method: "GET" });
 export const apiPost = (path, body, opts) => api(path, { ...(opts || {}), method: "POST", body });
 export const apiPatch = (path, body, opts) => api(path, { ...(opts || {}), method: "PATCH", body });
-export const apiPut = (path, body, opts) => api(path, { ...(opts || {}), method: "PUT", body });
 export const apiDelete = (path, opts) => api(path, { ...(opts || {}), method: "DELETE" });

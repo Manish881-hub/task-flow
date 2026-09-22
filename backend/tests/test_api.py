@@ -20,7 +20,7 @@ from fastapi.testclient import TestClient
 from app.core.security import hash_token
 from app.db import session as dbsession
 from app.db.base import Base
-from app.db.models import RefreshToken, User
+from app.db.models import RefreshToken
 from app.db.session import init_engine
 from app.main import create_app
 
