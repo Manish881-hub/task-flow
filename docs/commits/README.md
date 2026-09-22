@@ -13,3 +13,5 @@ Short notes, one per commit, newest last:
 9. `Rebuild header and add search palette` — `09-header-palette.md`
 10. `Apply Fjord color system` — `10-fjord-colors.md`
 11. `Add TypeSafe handbook` — `11-typesafe-handbook.md`
+12. `Apply warm ColorHunt palette` — `12-warm-palette.md`
+13. `Add TaskFlow landing` — `13-taskflow-landing.md`

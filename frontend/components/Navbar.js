@@ -128,7 +128,7 @@ export default function Navbar({ socketStatus }) {
     <header className="header">
       <div className="container nav nav-or">
         <Link href={isAuthed ? "/dashboard" : "/"} className="brand brand-btn" aria-label="TaskFlow home">
-          <span className="brand-mark" aria-hidden="true">T</span>
+          <img src="/logo.png" alt="TaskFlow" className="brand-logo-img" width={32} height={32} />
           <span className="brand-wordmark">TaskFlow</span>
         </Link>
 
