@@ -83,12 +83,6 @@
   user-select: none;
 }
 
-.tuf-logo-icon {
-  width: 32px;
-  height: 32px;
-  flex-shrink: 0;
-}
-
 .tuf-logo-img {
   width: 34px;
   height: 34px;
@@ -740,12 +734,6 @@
   overflow-x: auto;
   white-space: pre;
 }
-
-.tuf-syntax-comment { color: #94a3b8; font-style: italic; }
-.tuf-syntax-keyword { color: #1d70f5; font-weight: 600; }
-.tuf-syntax-def { color: #7c3aed; font-weight: 600; }
-.tuf-syntax-str { color: #059669; }
-.tuf-syntax-num { color: #d97706; }
 
 /* ==========================================================================
    Testimonials Section

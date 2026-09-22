@@ -9,7 +9,7 @@ export default function HeroSection() {
       <div className="tuf-container">
         <div className="tuf-hero-grid">
           {/* Hero Left Content */}
-          <div className="tuf-hero-left">
+          <div>
             <Link href="#features" className="tuf-badge-pill">
               <span className="tuf-badge-tag">NEW</span>
               <span>Live boards update as your team works</span>
