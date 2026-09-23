@@ -68,15 +68,23 @@ export function getErrorMessage(err) {
     return "Cannot reach the server. Check your connection and that the API is running.";
   }
   const status = err && typeof err.status === "number" ? err.status : null;
-  const detail =
-    err && err.body && typeof err.body === "object"
-      ? err.body.detail || err.body.message || err.body.error
-      : null;
-  const detailStr = Array.isArray(detail)
-    ? detail.map((d) => (typeof d === "string" ? d : d.msg || JSON.stringify(d))).join(" ")
-    : typeof detail === "string"
-      ? detail
-      : null;
+  // Backend envelope: { error: { code, message, details }, request_id }.
+  // details may be a string, an array of {loc,msg,type}, or null.
+  const body = err && err.body && typeof err.body === "object" ? err.body : null;
+  const errObj = body && body.error && typeof body.error === "object" ? body.error : null;
+  const rawDetail =
+    body && (body.detail || body.message)
+      ? body.detail || body.message
+      : errObj
+        ? errObj.details || errObj.message
+        : null;
+  const detailStr = Array.isArray(rawDetail)
+    ? rawDetail.map((d) => (typeof d === "string" ? d : d.msg || d.message || JSON.stringify(d))).join(" ")
+    : typeof rawDetail === "string"
+      ? rawDetail
+      : rawDetail && typeof rawDetail === "object"
+        ? rawDetail.message || JSON.stringify(rawDetail)
+        : null;
 
   switch (status) {
     case 400:

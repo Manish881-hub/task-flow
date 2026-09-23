@@ -6,10 +6,11 @@ const PRIORITIES = ["Low", "Medium", "High"];
 
 function validate(values) {
   const errors = {};
-  if (!values.title || values.title.trim().length < 3) {
-    errors.title = "Title must be at least 3 characters.";
-  } else if (values.title.trim().length > 120) {
-    errors.title = "Title must be under 120 characters.";
+  const title = (values.title || "").trim();
+  if (!title) {
+    errors.title = "Title is required.";
+  } else if (title.length > 200) {
+    errors.title = "Title must be under 200 characters.";
   }
   if (values.description && values.description.length > 2000) {
     errors.description = "Description must be under 2000 characters.";
@@ -21,6 +22,13 @@ function validate(values) {
   if (values.due_date) {
     const d = new Date(values.due_date);
     if (Number.isNaN(d.getTime())) errors.due_date = "Invalid date.";
+    else {
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      const picked = new Date(d);
+      picked.setHours(0, 0, 0, 0);
+      if (picked < today) errors.due_date = "Due date cannot be in the past.";
+    }
   }
   return errors;
 }
@@ -42,6 +50,7 @@ export default function TaskModal({ projectId, task, members, onClose, onSaved, 
   const [commentsState, setCommentsState] = useState("idle");
   const [commentText, setCommentText] = useState("");
   const [commentError, setCommentError] = useState("");
+  const [commentBusy, setCommentBusy] = useState(false);
 
   useEffect(() => {
     if (!editing) return;
@@ -125,16 +134,19 @@ export default function TaskModal({ projectId, task, members, onClose, onSaved, 
       setCommentError("Comment cannot be empty.");
       return;
     }
-    if (text.length > 1000) {
-      setCommentError("Comment must be under 1000 characters.");
+    if (text.length > 2000) {
+      setCommentError("Comment must be under 2000 characters.");
       return;
     }
+    setCommentBusy(true);
     try {
       const created = await apiPost(`/api/v1/projects/${projectId}/tasks/${task.id}/comments`, { content: text });
       setComments((c) => [...c, created?.comment || created]);
       setCommentText("");
     } catch (err) {
       setCommentError(getErrorMessage(err));
+    } finally {
+      setCommentBusy(false);
     }
   };
 
@@ -155,7 +167,7 @@ export default function TaskModal({ projectId, task, members, onClose, onSaved, 
         <form onSubmit={handleSubmit} noValidate>
           <div className="field">
             <label className="label" htmlFor="task-title">Title</label>
-            <input id="task-title" className="input" value={values.title} onChange={set("title")} maxLength={120} required />
+            <input id="task-title" className="input" value={values.title} onChange={set("title")} maxLength={200} required />
             {errors.title ? <span className="form-error">{errors.title}</span> : null}
           </div>
 
@@ -250,12 +262,12 @@ export default function TaskModal({ projectId, task, members, onClose, onSaved, 
                   className="textarea"
                   value={commentText}
                   onChange={(e) => setCommentText(e.target.value)}
-                  maxLength={1000}
+                  maxLength={2000}
                   placeholder="Write an update…"
                 />
                 {commentError ? <span className="form-error">{commentError}</span> : null}
               </div>
-              <button type="submit" className="btn btn-ghost btn-sm">Post comment</button>
+              <button type="submit" className="btn btn-ghost btn-sm" disabled={commentBusy}>{commentBusy ? "Posting…" : "Post comment"}</button>
             </form>
           </>
         ) : null}
