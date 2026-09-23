@@ -48,13 +48,20 @@
 
 .efferd-sidebar {
   width: 230px; flex: 0 0 230px;
-  /* Removed old CSS since Tailwind is now handling EfferdSidebar.js directly */
+  height: 100dvh; position: sticky; top: 0;
+  display: flex; flex-direction: column; gap: 0.35rem;
+  padding: 0.75rem;
+  background: #181818;
+  border-right: 1px solid #242424;
+  overflow-y: auto; overflow-x: hidden;
 }
 .efferd-sidebar.collapsed { width: 76px; }
+.efferd-sidebar.collapsed .efferd-menu-item,
+.efferd-sidebar.collapsed .efferd-search-btn { justify-content: center; padding-left: 0; padding-right: 0; }
 
 .efferd-brand-link {
   display: flex; align-items: center; gap: 0.6rem;
-  padding: 0.35rem 0.5rem; border-radius: 10px;
+  min-height: 56px; padding: 0.35rem 0.5rem; border-radius: 10px;
   color: #f8fafc; font-weight: 800; font-size: 1rem; letter-spacing: -0.02em;
   text-decoration: none;
 }
@@ -76,14 +83,14 @@
 .efferd-menu-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 0.15rem; }
 .efferd-menu-item {
   display: flex; align-items: center; gap: 0.65rem;
-  padding: 0.55rem 0.65rem; border-radius: 10px;
-  color: #94a3b8; font-size: 0.9rem; font-weight: 600; text-decoration: none;
+  min-height: 40px; padding: 0.5rem 0.65rem; border-radius: 10px;
+  color: #94a3b8; font-size: 0.875rem; font-weight: 500; letter-spacing: 0.01em; text-decoration: none;
   background: none; border: 0; width: 100%; font-family: inherit; cursor: pointer;
   transition: background 180ms ease, color 180ms ease;
 }
 .efferd-menu-item:hover { background: rgba(255, 255, 255, 0.05); color: #f8fafc; }
 .efferd-menu-item.active { background: rgba(29, 112, 245, 0.16); color: #f8fafc; }
-.efferd-menu-icon { width: 17px; height: 17px; flex: none; }
+.efferd-menu-icon { width: 16px; height: 16px; flex: none; }
 .efferd-menu-label-row { flex: 1; display: flex; align-items: center; justify-content: space-between; gap: 0.5rem; min-width: 0; }
 .efferd-count-badge {
   font-size: 0.7rem; font-weight: 800;
