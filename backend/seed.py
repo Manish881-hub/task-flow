@@ -41,8 +41,10 @@ try:
         db.add(ProjectMember(project_id=proj.id, user_id=alice.id, role="owner"))
         db.add(ProjectMember(project_id=proj.id, user_id=bob.id, role="member"))
         db.commit()
+        from datetime import datetime, timezone
+
         tasks = [
-            Task(project_id=proj.id, title="Setup repo", description="Init", status="Done", priority="High", created_by=alice.id),
+            Task(project_id=proj.id, title="Setup repo", description="Init", status="Done", priority="High", created_by=alice.id, completed_at=datetime.now(timezone.utc)),
             Task(project_id=proj.id, title="Design board", description="UI", status="In Progress", priority="Medium", assignee_id=bob.id, created_by=alice.id),
             Task(project_id=proj.id, title="Write API", description="Endpoints", status="To Do", priority="Medium", created_by=alice.id),
             Task(project_id=proj.id, title="Add WS", description="Live updates", status="To Do", priority="Low", created_by=bob.id),

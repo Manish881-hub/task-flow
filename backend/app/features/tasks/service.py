@@ -60,9 +60,16 @@ def create_task(db: Session, pid: str, uid: uuid.UUID, data: dict) -> Task:
     pid_u = _uuid(pid, "Project")
     if prepo.get_project(db, pid_u) is None:
         raise NotFoundError("Project")
-    _require_member(db, pid_u, uid)
+    membership = _require_member(db, pid_u, uid)
     _check_due(data.get("due_date"))
     aid = _check_assignee(db, pid_u, data.get("assignee_id"))
+    # Done rule applies on creation too: only the assignee (or owner)
+    # may create a task straight into Done. Otherwise any member could
+    # bypass the update-path check by choosing status=Done up front.
+    if (data.get("status") or "To Do") == "Done":
+        is_assignee = aid is not None and aid == uid
+        if not is_assignee and membership.role != "owner":
+            raise ForbiddenError("Only assignee or owner can mark Done")
     t = repo.create_task(
         db,
         project_id=pid_u,
@@ -102,18 +109,37 @@ def update_task(db: Session, pid: str, tid: str, uid: uuid.UUID, data: dict) -> 
         t.title = data["title"]
     if "description" in data and data["description"] is not None:
         t.description = data["description"]
+    status_changed = False
+    old_status = t.status
     if "status" in data and data["status"] is not None:
+        status_changed = data["status"] != t.status
         t.status = data["status"]
-        t.completed_at = utcnow() if data["status"] == "Done" else None
+        if data["status"] == "Done":
+            # Preserve the original completion time when re-saving Done.
+            if t.completed_at is None:
+                t.completed_at = utcnow()
+        else:
+            t.completed_at = None
     if "priority" in data and data["priority"] is not None:
         t.priority = data["priority"]
     if "due_date" in data:
         _check_due(data["due_date"])
         t.due_date = data["due_date"]
+    assignee_changed = False
+    old_assignee = t.assignee_id
     if "assignee_id" in data:
-        t.assignee_id = _check_assignee(db, pid_u, data["assignee_id"])
+        new_aid = _check_assignee(db, pid_u, data["assignee_id"])
+        assignee_changed = (old_assignee or None) != (new_aid or None)
+        t.assignee_id = new_aid
     t = repo.save(db, t)
-    repo.log(db, pid_u, uid, "task_updated", f"Task '{t.title}' updated")
+    # Distinct activity events so the feed can show "moved" vs "assigned"
+    # (spec item 21) instead of one generic "updated" bucket.
+    if status_changed:
+        repo.log(db, pid_u, uid, "task_moved", f"Task '{t.title}' moved {old_status} -> {t.status}")
+    if assignee_changed:
+        repo.log(db, pid_u, uid, "task_assigned", f"Task '{t.title}' assigned")
+    if not status_changed and not assignee_changed:
+        repo.log(db, pid_u, uid, "task_updated", f"Task '{t.title}' updated")
     return t
 
 
