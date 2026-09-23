@@ -202,12 +202,43 @@
   display: inline-flex; align-items: center; justify-content: center;
   font-size: 0.72rem; font-weight: 800;
 }
-.efferd-account-menu { background: #1c1f26; border-color: #343945; }
-.efferd-account-menu .menu-user { color: #f8fafc; }
-.efferd-account-menu .menu-email { color: #94a3b8; }
-.efferd-account-menu .menu-item { color: #f8fafc; }
-.efferd-account-menu .menu-item:hover { background: rgba(255, 255, 255, 0.06); }
-.efferd-account-menu .menu-head { border-color: #343945; }
+.efferd-avatar-lg { width: 28px; height: 28px; font-size: 0.78rem; }
+.efferd-account-text { flex: 1; min-width: 0; display: grid; text-align: left; line-height: 1.3; }
+.efferd-account-name {
+  font-size: 13px; font-weight: 600; color: #f5f5f5;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.efferd-account-email {
+  font-size: 10.5px; color: #999999;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.efferd-account-chevron { color: #777777; flex: none; }
+
+/* Floating overlay menus (Radix portal): never in sidebar flow. */
+.efferd-menu-pop {
+  width: 240px; background: #1b1b1b; border: 1px solid #303030;
+  border-radius: 10px; padding: 6px; color: #f5f5f5;
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.5);
+}
+.efferd-menu-pop-head { display: flex; align-items: center; gap: 0.6rem; padding: 0.5rem; }
+.efferd-menu-pop-head-text { flex: 1; min-width: 0; display: grid; line-height: 1.3; }
+.efferd-menu-pop-name {
+  font-size: 13px; font-weight: 600; color: #f5f5f5;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.efferd-menu-pop-email {
+  font-size: 10.5px; color: #999999;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.efferd-menu-pop-sep { background: #303030; }
+.efferd-menu-pop-item {
+  font-size: 13px; color: #e8e8e8; border-radius: 6px;
+  padding: 0.5rem; cursor: pointer;
+}
+.efferd-menu-pop-item[data-highlighted] { background: #242424; color: #ffffff; outline: none; }
+.efferd-menu-pop-item[data-disabled] { color: #666666; cursor: default; }
+.efferd-menu-pop-danger { color: #f87171; }
+.efferd-menu-pop-danger[data-highlighted] { background: rgba(239, 68, 68, 0.12); color: #fca5a5; }
 
 /* Real-data stats strip (DashboardStats): counts + status bars, no fake data. */
 .efferd-stats { display: grid; gap: 0.9rem; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); }

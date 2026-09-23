@@ -4,6 +4,13 @@ import { useCallback, useEffect, useState } from "react";
 import { useAuth } from "../../lib/auth";
 import { apiGet } from "../../lib/api";
 import SearchPalette from "../SearchPalette";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "../ui/dropdown-menu";
 
 /**
  * App rail: dark sidebar for authenticated pages. Only real destinations —
@@ -15,8 +22,6 @@ export default function EfferdSidebar({ currentProjectId, socketStatus }) {
   const router = useRouter();
   const [collapsed, setCollapsed] = useState(false);
   const [paletteOpen, setPaletteOpen] = useState(false);
-  const [accountOpen, setAccountOpen] = useState(false);
-  const [wsOpen, setWsOpen] = useState(false);
   const [updateDismissed, setUpdateDismissed] = useState(false);
   const [projectsList, setProjectsList] = useState([]);
   const [assignedCount, setAssignedCount] = useState(null);
@@ -52,20 +57,7 @@ export default function EfferdSidebar({ currentProjectId, socketStatus }) {
     };
   }, []);
 
-  useEffect(() => {
-    if (!accountOpen && !wsOpen) return;
-    const onKey = (e) => {
-      if (e.key === "Escape") {
-        setAccountOpen(false);
-        setWsOpen(false);
-      }
-    };
-    window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
-  }, [accountOpen, wsOpen]);
-
   const handleLogout = useCallback(async () => {
-    setAccountOpen(false);
     await logout();
     router.push("/login");
   }, [logout, router]);
@@ -110,41 +102,41 @@ export default function EfferdSidebar({ currentProjectId, socketStatus }) {
         </button>
       )}
 
-      <div className="menu-wrap efferd-ws-wrap">
-        <button
-          type="button"
-          className="efferd-ws-btn"
-          aria-expanded={wsOpen}
-          aria-haspopup="menu"
-          aria-label="Workspace: TaskFlow"
-          title={collapsed ? "Workspace: TaskFlow" : undefined}
-          onClick={() => setWsOpen((o) => !o)}
-        >
-          <span className="efferd-ws-dot" aria-hidden="true">T</span>
-          {!collapsed && (
-            <>
-              <span className="efferd-truncate efferd-ws-name">TaskFlow</span>
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                <path d="m7 15 5 5 5-5" />
-                <path d="m7 9 5-5 5 5" />
-              </svg>
-            </>
-          )}
-        </button>
-        {wsOpen && !collapsed && (
-          <>
-            <button type="button" className="menu-backdrop" aria-label="Close workspace menu" onClick={() => setWsOpen(false)} tabIndex={-1} />
-            <div className="menu efferd-account-menu" role="menu" aria-label="Workspace">
-              <div className="menu-head">
-                <div className="menu-user">Workspace</div>
-                <div className="menu-email">You are in your personal workspace</div>
-              </div>
-              <button type="button" className="menu-item" role="menuitemradio" aria-checked="true" onClick={() => setWsOpen(false)}>
-                TaskFlow (current)
-              </button>
-            </div>
-          </>
-        )}
+      <div className="efferd-ws-wrap">
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <button
+            type="button"
+            className="efferd-ws-btn"
+            aria-label="Workspace: TaskFlow"
+            title={collapsed ? "Workspace: TaskFlow" : undefined}
+          >
+            <span className="efferd-ws-dot" aria-hidden="true">T</span>
+            {!collapsed && (
+              <>
+                <span className="efferd-truncate efferd-ws-name">TaskFlow</span>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                  <path d="m7 15 5 5 5-5" />
+                  <path d="m7 9 5-5 5 5" />
+                </svg>
+              </>
+            )}
+          </button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent side="right" align="start" sideOffset={8} className="efferd-menu-pop">
+          <div className="efferd-menu-pop-head">
+            <span className="efferd-ws-dot" aria-hidden="true">T</span>
+            <span className="efferd-menu-pop-head-text">
+              <span className="efferd-menu-pop-name">TaskFlow</span>
+              <span className="efferd-menu-pop-email">Personal workspace</span>
+            </span>
+          </div>
+          <DropdownMenuSeparator className="efferd-menu-pop-sep" />
+          <DropdownMenuItem className="efferd-menu-pop-item" disabled title="Only one workspace exists">
+            TaskFlow (current)
+          </DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
       </div>
 
       <nav aria-label="Primary" className="efferd-nav-primary">
@@ -275,31 +267,53 @@ export default function EfferdSidebar({ currentProjectId, socketStatus }) {
             <a href="https://github.com/Manish881-hub/task-flow" target="_blank" rel="noopener noreferrer">Documentation</a>
           </div>
         )}
-        <div className="menu-wrap">
-          <button
-            type="button"
-            className="efferd-account-btn"
-            aria-expanded={accountOpen}
-            aria-haspopup="menu"
-            aria-label="Account menu"
-            onClick={() => setAccountOpen((o) => !o)}
-          >
-            <span className="efferd-avatar" aria-hidden="true">{initial}</span>
-            {!collapsed && <span className="efferd-truncate">{user?.name || user?.email || "Account"}</span>}
-          </button>
-          {accountOpen && (
-            <>
-              <button type="button" className="menu-backdrop" aria-label="Close account menu" onClick={() => setAccountOpen(false)} tabIndex={-1} />
-              <div className="menu efferd-account-menu" role="menu" aria-label="Account">
-                <div className="menu-head">
-                  <div className="menu-user">{user?.name || "User"}</div>
-                  <div className="menu-email">{user?.email || ""}</div>
-                </div>
-                <button type="button" className="menu-item" role="menuitem" onClick={handleLogout}>Log out</button>
-              </div>
-            </>
-          )}
-        </div>
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <button
+              type="button"
+              className="efferd-account-btn"
+              aria-label="Account menu"
+              title={collapsed ? (user?.name || user?.email || "Account") : undefined}
+            >
+              <span className="efferd-avatar efferd-avatar-lg" aria-hidden="true">{initial}</span>
+              {!collapsed && (
+                <span className="efferd-account-text">
+                  <span className="efferd-account-name">{user?.name || "User"}</span>
+                  <span className="efferd-account-email">{user?.email || ""}</span>
+                </span>
+              )}
+              {!collapsed && (
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" className="efferd-account-chevron">
+                  <path d="m7 15 5 5 5-5" />
+                  <path d="m7 9 5-5 5 5" />
+                </svg>
+              )}
+            </button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent side="right" align="end" sideOffset={8} className="efferd-menu-pop">
+            <div className="efferd-menu-pop-head">
+              <span className="efferd-avatar efferd-avatar-lg" aria-hidden="true">{initial}</span>
+              <span className="efferd-menu-pop-head-text">
+                <span className="efferd-menu-pop-name">{user?.name || "User"}</span>
+                <span className="efferd-menu-pop-email">{user?.email || ""}</span>
+              </span>
+            </div>
+            <DropdownMenuSeparator className="efferd-menu-pop-sep" />
+            <DropdownMenuItem className="efferd-menu-pop-item" disabled title="Not available yet">
+              Account
+            </DropdownMenuItem>
+            <DropdownMenuItem className="efferd-menu-pop-item" disabled title="Not available yet">
+              Notifications
+            </DropdownMenuItem>
+            <DropdownMenuItem className="efferd-menu-pop-item" disabled title="Not available yet">
+              Settings
+            </DropdownMenuItem>
+            <DropdownMenuSeparator className="efferd-menu-pop-sep" />
+            <DropdownMenuItem className="efferd-menu-pop-item efferd-menu-pop-danger" onSelect={handleLogout}>
+              Log out
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
       </div>
 
       <SearchPalette open={paletteOpen} onClose={closePalette} />
