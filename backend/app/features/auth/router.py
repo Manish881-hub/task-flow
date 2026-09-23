@@ -27,12 +27,15 @@ def _limit(fn):
 
 
 def _set_refresh_cookie(response: Response, token: str) -> None:
+    # Secure only in prod (HTTPS). Local dev runs over plain HTTP where
+    # Secure cookies would never be sent back, breaking refresh entirely.
+    is_prod = settings.ENV.lower() == "prod"
     response.set_cookie(
         REFRESH_COOKIE,
         token,
         httponly=True,
         samesite="lax",
-        secure=False,  # local dev; set True behind HTTPS in prod
+        secure=is_prod,
         path=REFRESH_PATH,
         max_age=settings.REFRESH_DAYS * 86400,
     )
