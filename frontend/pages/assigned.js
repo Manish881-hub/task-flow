@@ -1,27 +1,12 @@
-import Head from "next/head";
 import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
-import { AppSidebar } from "../components/app-sidebar";
+import EfferdPageShell from "../components/EfferdPageShell";
 import RequireAuth from "../components/RequireAuth";
 import EmptyState from "../components/EmptyState";
 import Skeleton from "../components/Skeleton";
 import ErrorBanner from "../components/ErrorBanner";
 import { apiGet, getErrorMessage } from "../lib/api";
 import { useTaskFlowSocket } from "../hooks/useSocket";
-import {
-  Breadcrumb,
-  BreadcrumbItem,
-  BreadcrumbLink,
-  BreadcrumbList,
-  BreadcrumbPage,
-  BreadcrumbSeparator,
-} from "../components/ui/breadcrumb";
-import { Separator } from "../components/ui/separator";
-import {
-  SidebarInset,
-  SidebarProvider,
-  SidebarTrigger,
-} from "../components/ui/sidebar";
 
 export default function Assigned() {
   return (
@@ -34,17 +19,24 @@ export default function Assigned() {
 function AssignedInner() {
   const { status: socketStatus, lastEvent } = useTaskFlowSocket();
   const [tasks, setTasks] = useState([]);
+  const [projects, setProjects] = useState([]);
   const [state, setState] = useState("loading");
   const [error, setError] = useState("");
   const [filter, setFilter] = useState("all");
+  const [projectFilter, setProjectFilter] = useState("all");
 
   const load = useCallback(async () => {
     setState("loading");
     setError("");
     try {
-      const data = await apiGet("/api/v1/assigned");
-      const list = Array.isArray(data) ? data : data?.items || data?.tasks || [];
+      const [taskData, projData] = await Promise.all([
+        apiGet("/api/v1/assigned?per_page=100"),
+        apiGet("/api/v1/projects?per_page=100").catch(() => []),
+      ]);
+      const list = Array.isArray(taskData) ? taskData : taskData?.items || taskData?.tasks || [];
       setTasks(list);
+      const plist = Array.isArray(projData) ? projData : projData?.items || projData?.projects || [];
+      setProjects(plist);
       setState("done");
     } catch (err) {
       setError(getErrorMessage(err));
@@ -62,82 +54,91 @@ function AssignedInner() {
     }
   }, [lastEvent?._receivedAt]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  const visible = tasks.filter((t) => (filter === "all" ? true : t.status === filter));
+  const names = {};
+  for (const p of projects) names[String(p.id)] = p.name;
+  const visible = tasks.filter(
+    (t) =>
+      (filter === "all" ? true : t.status === filter) &&
+      (projectFilter === "all" ? true : String(t.project_id) === projectFilter)
+  );
 
   return (
-    <div className="dark">
-      <Head><title>Assigned to me — TaskFlow</title></Head>
-      <SidebarProvider>
-        <AppSidebar />
-        <SidebarInset>
-          <header className="flex h-16 shrink-0 items-center gap-2">
-            <div className="flex items-center gap-2 px-4">
-              <SidebarTrigger className="-ml-1" />
-              <Separator orientation="vertical" className="mr-2 data-[orientation=vertical]:h-4" />
-              <Breadcrumb>
-                <BreadcrumbList>
-                  <BreadcrumbItem className="hidden md:block">
-                    <BreadcrumbLink href="/dashboard">TaskFlow</BreadcrumbLink>
-                  </BreadcrumbItem>
-                  <BreadcrumbSeparator className="hidden md:block" />
-                  <BreadcrumbItem>
-                    <BreadcrumbPage>Assigned to me</BreadcrumbPage>
-                  </BreadcrumbItem>
-                </BreadcrumbList>
-              </Breadcrumb>
-            </div>
-          </header>
-          <div className="flex flex-1 flex-col gap-4 p-4 pt-0">
-            <div className="container main">
-              <div className="spread" style={{ marginBottom: "1rem" }}>
-                <div>
-                  <h1 style={{ marginBottom: "0.2rem" }}>Assigned to me</h1>
-                  <p className="muted" style={{ margin: 0 }}>Every task assigned to you, across all projects.</p>
-                </div>
-                <select className="select" value={filter} onChange={(e) => setFilter(e.target.value)} aria-label="Filter by status">
-                  <option value="all">All statuses</option>
-                  <option value="To Do">To Do</option>
-                  <option value="In Progress">In Progress</option>
-                  <option value="Done">Done</option>
-                </select>
-              </div>
+    <EfferdPageShell title="Assigned to me" crumb="Assigned to me" socketStatus={socketStatus}>
+      <ErrorBanner message={error} onRetry={load} onDismiss={() => setError("")} />
 
-              <ErrorBanner message={error} onRetry={load} onDismiss={() => setError("")} />
+      <div className="dash-head">
+        <div>
+          <h1 className="dash-title">Assigned to me</h1>
+          <p className="dash-subtitle">Every task assigned to you across all projects.</p>
+        </div>
+        <div className="dash-controls">
+          {projects.length > 0 ? (
+            <select
+              className="dash-select"
+              value={projectFilter}
+              onChange={(e) => setProjectFilter(e.target.value)}
+              aria-label="Filter by project"
+            >
+              <option value="all">All projects</option>
+              {projects.map((p) => (
+                <option key={p.id} value={p.id}>{p.name}</option>
+              ))}
+            </select>
+          ) : null}
+          <select
+            className="dash-select"
+            value={filter}
+            onChange={(e) => setFilter(e.target.value)}
+            aria-label="Filter by status"
+          >
+            <option value="all">All statuses</option>
+            <option value="To Do">To Do</option>
+            <option value="In Progress">In Progress</option>
+            <option value="Done">Done</option>
+          </select>
+        </div>
+      </div>
 
-              {state === "loading" ? (
-                <div className="stack"><Skeleton lines={4} /><Skeleton lines={4} /></div>
-              ) : state === "error" && tasks.length === 0 ? (
-                <EmptyState title="Could not load tasks" hint="Check your connection and retry." action={<button className="btn btn-primary" onClick={load}>Retry</button>} />
-              ) : visible.length === 0 ? (
-                <EmptyState title="Nothing here" hint={tasks.length ? "No tasks match this filter." : "No tasks are assigned to you yet."} />
-              ) : (
-                <div className="stack">
-                  {visible.map((t) => (
-                    <div key={t.id} className="card spread">
-                      <div>
-                        <strong>{t.title}</strong>
-                        <div className="small muted">
-                          {t.project_name || t.project_id ? (
-                            <span>Project: {t.project_name || String(t.project_id).slice(0, 8)} · </span>
-                          ) : null}
-                          {t.priority ? <span>{t.priority} · </span> : null}
-                          {t.due_date ? <span>Due {new Date(t.due_date).toLocaleDateString()}</span> : null}
-                        </div>
-                      </div>
-                      <span className="row">
-                        <span className="badge badge-green">{t.status}</span>
-                        {t.project_id ? (
-                          <Link href={`/projects/${t.project_id}`} className="btn btn-ghost btn-sm">Open</Link>
-                        ) : null}
-                      </span>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
+      {state === "loading" ? (
+        <div className="stack"><Skeleton lines={4} /><Skeleton lines={4} /></div>
+      ) : state === "error" && tasks.length === 0 ? (
+        <EmptyState title="Could not load tasks" hint="Check your connection and retry." action={<button className="btn btn-primary" onClick={load}>Retry</button>} />
+      ) : (
+        <section className="eff-section" aria-label="Tasks">
+          <div className="eff-section-head">
+            <h2 className="eff-section-title">Tasks · {visible.length}</h2>
           </div>
-        </SidebarInset>
-      </SidebarProvider>
-    </div>
+          {visible.length === 0 ? (
+            <EmptyState
+              title="Nothing here"
+              hint={tasks.length ? "No tasks match these filters." : "No tasks are assigned to you yet."}
+            />
+          ) : (
+            <div>
+              {visible.map((t) => (
+                <div key={t.id} className="eff-row">
+                  <div>
+                    <strong className="dash-text-sm">{t.title}</strong>
+                    <div className="dash-text-sm dash-muted">
+                      {t.project_id ? (
+                        <span>{names[String(t.project_id)] || `Project ${String(t.project_id).slice(0, 8)}`} · </span>
+                      ) : null}
+                      {t.priority ? <span>{t.priority} · </span> : null}
+                      {t.due_date ? <span>Due {new Date(t.due_date).toLocaleDateString()}</span> : <span>No due date</span>}
+                    </div>
+                  </div>
+                  <span className="dash-row">
+                    <span className="badge badge-green">{t.status}</span>
+                    {t.project_id ? (
+                      <Link href={`/projects/${t.project_id}`} className="dash-btn-secondary dash-btn-sm">Open</Link>
+                    ) : null}
+                  </span>
+                </div>
+              ))}
+            </div>
+          )}
+        </section>
+      )}
+    </EfferdPageShell>
   );
 }

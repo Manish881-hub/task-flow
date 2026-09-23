@@ -1,7 +1,6 @@
-import Head from "next/head";
 import { useRouter } from "next/router";
 import { useCallback, useEffect, useMemo, useState } from "react";
-import EfferdSidebar from "../../components/dashboard/EfferdSidebar";
+import EfferdPageShell from "../../components/EfferdPageShell";
 import RequireAuth from "../../components/RequireAuth";
 import TaskCard from "../../components/TaskCard";
 import TaskModal from "../../components/TaskModal";
@@ -208,40 +207,52 @@ function ProjectInner() {
   if (!id) return null;
 
   return (
-    <div className="efferd-layout">
-      <Head><title>{project?.name ? `${project.name} — TaskFlow` : "Project — TaskFlow"}</title></Head>
-      <EfferdSidebar currentProjectId={typeof id === "string" ? id : undefined} socketStatus={socketStatus} />
-      <main className="efferd-main">
-        <div className="container main">
-        <ErrorBanner message={error} onRetry={loadProject} onDismiss={() => setError("")} />
+    <EfferdPageShell
+      title={project?.name ? project.name : "Project"}
+      crumb={project?.name ? project.name : "Project"}
+      socketStatus={socketStatus}
+      currentProjectId={typeof id === "string" ? id : undefined}
+      headRight={
+        socketStatus === "Live"
+          ? <span className="badge badge-green">live</span>
+          : <span className="badge">reconnecting</span>
+      }
+    >
+      <ErrorBanner message={error} onRetry={loadProject} onDismiss={() => setError("")} />
 
-        {state === "loading" && !project ? (
-          <Skeleton lines={5} />
-        ) : state === "error" && !project ? (
-          <EmptyState title="Could not load project" hint="It may have been deleted or you lost access." action={<button className="btn btn-primary" onClick={loadProject}>Retry</button>} />
-        ) : (
-          <>
-            <div className="spread" style={{ marginBottom: "1rem" }}>
-              <div>
-                <h1 style={{ marginBottom: "0.2rem" }}>{project?.name}</h1>
-                {project?.description ? <p className="muted" style={{ margin: 0 }}>{project.description}</p> : null}
-              </div>
-              <div className="row">
-                <button className="btn btn-accent" onClick={() => setModalTask(null)}>New task</button>
-                {isOwner ? <button className="btn btn-ghost" onClick={() => setShowInvite(true)}>Invite</button> : null}
-              </div>
+      {state === "loading" && !project ? (
+        <Skeleton lines={5} />
+      ) : state === "error" && !project ? (
+        <EmptyState title="Could not load project" hint="It may have been deleted or you lost access." action={<button className="btn btn-primary" onClick={loadProject}>Retry</button>} />
+      ) : (
+        <>
+          <div className="dash-head">
+            <div>
+              <h1 className="dash-title">{project?.name}</h1>
+              {project?.description ? <p className="dash-subtitle">{project.description}</p> : null}
             </div>
+            <div className="dash-controls">
+              <button className="btn btn-accent btn-sm" onClick={() => setModalTask(null)}>New task</button>
+              {isOwner ? <button className="btn btn-ghost btn-sm" onClick={() => setShowInvite(true)}>Invite</button> : null}
+            </div>
+          </div>
 
             {state === "loading" ? (
               <div className="grid grid-3"><CardSkeleton /><CardSkeleton /><CardSkeleton /></div>
             ) : tasks.length === 0 ? (
-              <EmptyState
-                title="No tasks yet"
-                hint="Create the first task to populate the board."
-                action={<button className="btn btn-accent" onClick={() => setModalTask(null)}>Create task</button>}
-              />
+              <section className="eff-section" aria-label="Board">
+                <EmptyState
+                  title="No tasks yet"
+                  hint="Create the first task to populate the board."
+                  action={<button className="btn btn-accent" onClick={() => setModalTask(null)}>Create task</button>}
+                />
+              </section>
             ) : (
-              <section aria-label="Board" className="board">
+              <section aria-label="Board" className="eff-section">
+                <div className="eff-section-head">
+                  <h2 className="eff-section-title">Board · {tasks.length}</h2>
+                </div>
+                <div className="board">
                 {COLUMNS.map((col) => (
                   <div
                     key={col}
@@ -270,12 +281,15 @@ function ProjectInner() {
                     {byStatus[col].length === 0 ? <p className="muted small">Drop tasks here.</p> : null}
                   </div>
                 ))}
+                </div>
               </section>
             )}
 
-            <div className="grid grid-2" style={{ marginTop: "1.5rem" }}>
-              <section className="card" aria-label="Backlog">
-                <h2 style={{ fontSize: "1.1rem" }}>Backlog <span className="small muted">· server-side · {backlogMeta.total} total</span></h2>
+            <div className="dash-grid">
+              <section className="eff-section" aria-label="Backlog">
+                <div className="eff-section-head">
+                  <h2 className="eff-section-title">Backlog <span className="small muted">· server-side · {backlogMeta.total} total</span></h2>
+                </div>
                 <div className="toolbar">
                   <input
                     id="backlog-search"
@@ -314,10 +328,10 @@ function ProjectInner() {
                 ) : backlog.length === 0 ? (
                   <p className="muted small">No tasks match these filters.</p>
                 ) : (
-                  <div className="stack">
+                  <div>
                     {backlog.map((t) => (
-                      <div key={t.id} className="spread" style={{ borderBottom: "1px solid var(--color-border)", paddingBottom: "0.6rem" }}>
-                        <button className="nav-link" style={{ textAlign: "left", color: "var(--color-fg)" }} onClick={() => setModalTask(t)}>
+                      <div key={t.id} className="eff-row">
+                        <button className="nav-link" style={{ textAlign: "left" }} onClick={() => setModalTask(t)}>
                           <strong className="small">{t.title}</strong>
                           <span className="small muted"> · {t.status} · {t.priority || "—"}</span>
                         </button>
@@ -333,20 +347,20 @@ function ProjectInner() {
                 </div>
               </section>
 
-              <div className="stack">
-                <section className="card" aria-label="Members">
-                  <div className="spread" style={{ marginBottom: "0.75rem" }}>
-                    <h2 style={{ margin: 0, fontSize: "1.1rem" }}>Members ({members.length})</h2>
+              <div className="dash-rail">
+                <section className="eff-section" aria-label="Members">
+                  <div className="eff-section-head">
+                    <h2 className="eff-section-title">Members ({members.length})</h2>
                     {isOwner ? <button className="btn btn-ghost btn-sm" onClick={() => setShowInvite(true)}>Invite</button> : null}
                   </div>
-                  <div className="stack">
+                  <div>
                     {members.length === 0 ? <p className="muted small">No members listed.</p> : null}
                     {members.map((m) => {
                       const mid = m.user_id || m.id;
                       const label = m.name || m.email || String(mid).slice(0, 8);
                       return (
-                        <div key={mid} className="spread">
-                          <span className="row">
+                        <div key={mid} className="eff-row">
+                          <span className="dash-row">
                             <span className="avatar" aria-hidden="true">{String(label).charAt(0).toUpperCase()}</span>
                             <span className="small"><strong>{label}</strong> <span className="muted">{m.role ? `· ${m.role}` : ""}</span></span>
                           </span>
@@ -360,10 +374,11 @@ function ProjectInner() {
                   {!isOwner ? <p className="small muted" style={{ marginTop: "0.75rem", marginBottom: 0 }}>Only owners can invite or remove members.</p> : null}
                 </section>
 
-                <section className="card" aria-label="Activity">
-                  <h2 style={{ margin: 0, marginBottom: "0.75rem", fontSize: "1.1rem" }}>
-                    Activity {socketStatus === "Live" ? <span className="badge badge-green">live</span> : <span className="badge">updating on reconnect</span>}
-                  </h2>
+                <section className="eff-section" aria-label="Activity">
+                  <div className="eff-section-head">
+                    <h2 className="eff-section-title">Activity</h2>
+                    {socketStatus === "Live" ? <span className="badge badge-green">live</span> : <span className="badge">updating on reconnect</span>}
+                  </div>
                   <ActivityFeed items={activity} />
                 </section>
               </div>
@@ -400,8 +415,6 @@ function ProjectInner() {
             }}
           />
         ) : null}
-        </div>
-      </main>
-    </div>
+    </EfferdPageShell>
   );
 }
