@@ -1,7 +1,6 @@
-import Head from "next/head";
 import Link from "next/link";
 import { useCallback, useEffect, useMemo, useState } from "react";
-import EfferdSidebar from "../components/dashboard/EfferdSidebar";
+import EfferdPageShell from "../components/EfferdPageShell";
 import RequireAuth from "../components/RequireAuth";
 import ErrorBanner from "../components/ErrorBanner";
 import EmptyState from "../components/EmptyState";
@@ -10,14 +9,6 @@ import ActivityFeed from "../components/ActivityFeed";
 import { apiDelete, apiGet, apiPost, getErrorMessage } from "../lib/api";
 import { useAuth } from "../lib/auth";
 import { useTaskFlowSocket } from "../hooks/useSocket";
-import {
-  Breadcrumb,
-  BreadcrumbItem,
-  BreadcrumbLink,
-  BreadcrumbList,
-  BreadcrumbPage,
-  BreadcrumbSeparator,
-} from "../components/ui/breadcrumb";
 
 function normalizeList(data) {
   if (Array.isArray(data)) return data;
@@ -231,29 +222,13 @@ function DashboardInner() {
     socketStatus === "Live" ? <span className="badge badge-green">live</span> : <span className="badge">reconnecting</span>;
 
   return (
-    <div className="efferd-layout">
-      <Head><title>Dashboard — TaskFlow</title></Head>
-      <EfferdSidebar socketStatus={socketStatus} currentProjectId={null} />
-      <main className="efferd-main">
-        <header className="efferd-header">
-          <Breadcrumb>
-            <BreadcrumbList>
-              <BreadcrumbItem className="hidden md:block">
-                <BreadcrumbLink href="/dashboard">TaskFlow</BreadcrumbLink>
-              </BreadcrumbItem>
-              <BreadcrumbSeparator className="hidden md:block" />
-              <BreadcrumbItem>
-                <BreadcrumbPage>Dashboard</BreadcrumbPage>
-              </BreadcrumbItem>
-            </BreadcrumbList>
-          </Breadcrumb>
-          <div style={{ marginLeft: "auto" }} className="small efferd-text-muted">
-            {user?.name || user?.email || ""}
-          </div>
-        </header>
-
-        <div className="dash-wrap">
-          <ErrorBanner message={error} onRetry={load} onDismiss={() => setError("")} />
+    <EfferdPageShell
+      title="Dashboard"
+      crumb="Dashboard"
+      socketStatus={socketStatus}
+      headRight={<span className="small efferd-text-muted">{user?.name || user?.email || ""}</span>}
+    >
+      <ErrorBanner message={error} onRetry={load} onDismiss={() => setError("")} />
 
           {/* dashboard header: greeting + live controls */}
           <div className="dash-head">
@@ -472,9 +447,7 @@ function DashboardInner() {
               </aside>
             </div>
           )}
-        </div>
-      </main>
-    </div>
+    </EfferdPageShell>
   );
 }
 

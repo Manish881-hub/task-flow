@@ -4,8 +4,7 @@
    faint #64748b · input #09090b · accent #1d70f5 (matches app blue theme). */
 
 .efferd-layout {
-  --background: oklch(0.145 0 0);
-  --foreground: oklch(0.985 0 0);
+  --background: oklch(0.145 0 0);  --foreground: oklch(0.985 0 0);
   --card: oklch(0.205 0 0);
   --card-foreground: oklch(0.985 0 0);
   --popover: oklch(0.205 0 0);
@@ -31,6 +30,7 @@
   --sidebar-border: oklch(1 0 0 / 10%);
   display: flex; min-height: 100dvh; align-items: stretch;
   background-color: #09090b;
+  color: #f5f5f5;
 }
 
 .efferd-main { 
@@ -309,6 +309,65 @@
   padding: 0 32px;
 }
 
+/* ---- Shared page shell: identical padding on every page, no max-width. */
+.efferd-page { padding: 20px 30px 24px; min-width: 0; }
+.efferd-header-right { margin-left: auto; display: flex; align-items: center; gap: 0.6rem; }
+
+/* ---- Divider-based sections (shared by dashboard / assigned / project).
+   Transparent background, thin top rule, minimal radius — no white boxes. */
+.eff-section { background: transparent; border: 0; border-top: 1px solid #242424; border-radius: 0; padding: 24px 0; }
+.eff-section:first-child { border-top: 0; padding-top: 4px; }
+.eff-section-head { display: flex; justify-content: space-between; align-items: center; gap: 0.75rem; margin-bottom: 1rem; }
+.eff-section-title { margin: 0; font-size: 1.05rem; font-weight: 700; color: #f5f5f5; }
+.eff-row {
+  display: flex; justify-content: space-between; align-items: center; gap: 0.75rem;
+  padding: 0.7rem 0; border-bottom: 1px solid #242424;
+}
+.eff-row:last-child { border-bottom: 0; }
+.dash-row { display: flex; align-items: center; gap: 0.6rem; }
+
+/* ---- Dark visual language, scoped to the shell. Globals stay light. */
+.efferd-layout h1, .efferd-layout h2, .efferd-layout h3 { color: #f5f5f5; }
+.efferd-layout .muted { color: #999999; }
+.efferd-layout .label { color: #f5f5f5; }
+.efferd-layout .input, .efferd-layout .select, .efferd-layout .textarea {
+  background: #09090b; border-color: #333333; color: #f5f5f5;
+}
+.efferd-layout .input:hover, .efferd-layout .select:hover, .efferd-layout .textarea:hover { border-color: #4a4a4a; }
+.efferd-layout .input:focus, .efferd-layout .select:focus, .efferd-layout .textarea:focus {
+  border-color: #1d70f5; box-shadow: 0 0 0 2px rgba(29, 112, 245, 0.35);
+}
+.efferd-layout .input::placeholder, .efferd-layout .textarea::placeholder { color: #666666; }
+.efferd-layout .btn-ghost { background: #242424; color: #f5f5f5; border-color: #333333; }
+.efferd-layout .btn-ghost:hover { background: #2e2e2e; border-color: #3d3d3d; color: #f5f5f5; }
+.efferd-layout .btn-ghost:disabled { opacity: 0.55; }
+.efferd-layout .badge { background: #242424; border-color: #333333; color: #b8b8b8; }
+.efferd-layout .badge-green { background: rgba(34, 197, 94, 0.12); border-color: rgba(34, 197, 94, 0.4); color: #4ade80; }
+.efferd-layout .badge-red { background: rgba(239, 68, 68, 0.1); border-color: rgba(239, 68, 68, 0.4); color: #f87171; }
+.efferd-layout .badge-gold { background: rgba(217, 119, 6, 0.12); border-color: rgba(217, 119, 6, 0.4); color: #fbbf24; }
+.efferd-layout .badge-slate { background: #242424; border-color: #333333; color: #999999; }
+.efferd-layout .empty { background: transparent; border: 1px dashed #333333; }
+.efferd-layout .empty-icon { background: #111111; border-color: #333333; color: #888888; }
+.efferd-layout .column { background: #111111; border-color: #242424; }
+.efferd-layout .column.over { border-color: #1d70f5; background: rgba(29, 112, 245, 0.07); }
+.efferd-layout .column-title { color: #f5f5f5; }
+.efferd-layout .count { background: #242424; border-color: #333333; color: #999999; }
+.efferd-layout .task { background: #161616; border-color: #2a2a2a; box-shadow: none; }
+.efferd-layout .task:hover { border-color: #1d70f5; }
+.efferd-layout .task-title { color: #f5f5f5; }
+.efferd-layout .avatar { background: #242424; color: #b8b8b8; }
+.efferd-layout .activity-item { border-color: #242424; }
+.efferd-layout .comment { background: transparent; border-color: #242424; }
+.efferd-layout .overlay { background: rgba(0, 0, 0, 0.6); }
+.efferd-layout .modal { background: #111111; border-color: #242424; color: #f5f5f5; }
+.efferd-layout .banner { background: rgba(239, 68, 68, 0.08); border-color: rgba(239, 68, 68, 0.35); color: #fca5a5; }
+.efferd-layout .form-error { color: #f87171; }
+.efferd-layout .form-hint { color: #666666; }
+.efferd-layout .nav-link { color: #b8b8b8; }
+.efferd-layout .nav-link:hover { color: #f5f5f5; background: transparent; }
+.efferd-layout hr.divider { border-color: #242424; }
+.efferd-layout .pagination { color: #999999; }
+
 .efferd-section {
   padding: 24px 0;
   border-bottom: 1px solid #242424;
@@ -394,9 +453,14 @@
 .dash-grid { display: grid; grid-template-columns: minmax(0, 1fr) 360px; gap: 1.5rem; align-items: start; }
 .dash-left { display: flex; flex-direction: column; gap: 1.5rem; min-width: 0; }
 .dash-panel {
-  background: #111111; border: 1px solid #242424; border-radius: 10px;
-  padding: 1.25rem; min-width: 0;
+  background: transparent; border: 0; border-bottom: 1px solid #242424;
+  border-radius: 0; padding: 24px 0; min-width: 0;
 }
+.dash-left > .dash-panel:last-child,
+.dash-rail > .dash-panel:last-child { border-bottom: 0; }
+.dash-split > .dash-panel { border-bottom: 0; padding: 0; }
+.dash-split { padding: 24px 0; border-bottom: 1px solid #242424; }
+.dash-left > .dash-split:last-child { border-bottom: 0; }
 .dash-panel-head { display: flex; justify-content: space-between; align-items: center; gap: 0.75rem; margin-bottom: 1rem; }
 .dash-panel-title { font-size: 1rem; font-weight: 700; color: #f5f5f5; }
 .dash-panel-sub { font-size: 0.78rem; color: #888888; margin-top: 0.15rem; }
