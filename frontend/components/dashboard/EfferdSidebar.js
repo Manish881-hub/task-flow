@@ -16,6 +16,7 @@ export default function EfferdSidebar({ currentProjectId, socketStatus }) {
   const [collapsed, setCollapsed] = useState(false);
   const [paletteOpen, setPaletteOpen] = useState(false);
   const [accountOpen, setAccountOpen] = useState(false);
+  const [wsOpen, setWsOpen] = useState(false);
   const [projectsList, setProjectsList] = useState([]);
   const [assignedCount, setAssignedCount] = useState(null);
 
@@ -51,13 +52,16 @@ export default function EfferdSidebar({ currentProjectId, socketStatus }) {
   }, []);
 
   useEffect(() => {
-    if (!accountOpen) return;
+    if (!accountOpen && !wsOpen) return;
     const onKey = (e) => {
-      if (e.key === "Escape") setAccountOpen(false);
+      if (e.key === "Escape") {
+        setAccountOpen(false);
+        setWsOpen(false);
+      }
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [accountOpen]);
+  }, [accountOpen, wsOpen]);
 
   const handleLogout = useCallback(async () => {
     setAccountOpen(false);
@@ -71,28 +75,66 @@ export default function EfferdSidebar({ currentProjectId, socketStatus }) {
 
   return (
     <aside className={`efferd-sidebar${collapsed ? " collapsed" : ""}`} aria-label="App navigation">
-      <Link href="/dashboard" className="efferd-brand-link">
-        <img src="/logo.png" alt="TaskFlow" width={30} height={30} className="efferd-brand-logo" />
-        {!collapsed && <span className="efferd-brand-text">TaskFlow</span>}
-      </Link>
-
-      <button type="button" className="efferd-search-btn" onClick={openPalette} aria-label="Search projects and tasks (Command K)">
-        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true">
-          <path d="m21 21-4.34-4.34" />
-          <circle cx="11" cy="11" r="8" />
-        </svg>
+      <div className="efferd-brand-row">
+        <Link href="/dashboard" className="efferd-brand-link">
+          <img src="/logo.png" alt="TaskFlow" width={30} height={30} className="efferd-brand-logo" />
+          {!collapsed && <span className="efferd-brand-text">TaskFlow</span>}
+        </Link>
         {!collapsed && (
+          <button
+            type="button"
+            className="efferd-icon-btn"
+            onClick={openPalette}
+            aria-label="Search projects and tasks (Command K)"
+            title="Search (⌘K)"
+          >
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true">
+              <path d="m21 21-4.34-4.34" />
+              <circle cx="11" cy="11" r="8" />
+            </svg>
+          </button>
+        )}
+      </div>
+
+      <div className="menu-wrap efferd-ws-wrap">
+        <button
+          type="button"
+          className="efferd-ws-btn"
+          aria-expanded={wsOpen}
+          aria-haspopup="menu"
+          aria-label="Workspace: TaskFlow"
+          title={collapsed ? "Workspace: TaskFlow" : undefined}
+          onClick={() => setWsOpen((o) => !o)}
+        >
+          <span className="efferd-ws-dot" aria-hidden="true">T</span>
+          {!collapsed && (
+            <>
+              <span className="efferd-truncate efferd-ws-name">TaskFlow</span>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                <path d="m7 15 5 5 5-5" />
+                <path d="m7 9 5-5 5 5" />
+              </svg>
+            </>
+          )}
+        </button>
+        {wsOpen && !collapsed && (
           <>
-            <span className="efferd-search-placeholder">Search</span>
-            <span className="kbd-hints" aria-hidden="true">
-              <kbd className="kbd kbd-dark">⌘</kbd>
-              <kbd className="kbd kbd-dark">K</kbd>
-            </span>
+            <button type="button" className="menu-backdrop" aria-label="Close workspace menu" onClick={() => setWsOpen(false)} tabIndex={-1} />
+            <div className="menu efferd-account-menu" role="menu" aria-label="Workspace">
+              <div className="menu-head">
+                <div className="menu-user">Workspace</div>
+                <div className="menu-email">You are in your personal workspace</div>
+              </div>
+              <button type="button" className="menu-item" role="menuitemradio" aria-checked="true" onClick={() => setWsOpen(false)}>
+                TaskFlow (current)
+              </button>
+            </div>
           </>
         )}
-      </button>
+      </div>
 
-      <nav aria-label="Primary">
+      <nav aria-label="Primary" className="efferd-nav-primary">
+        {!collapsed && <div className="efferd-menu-group-label">Workspace</div>}
         <ul className="efferd-menu-list">
           <li>
             <Link href="/dashboard" className={`efferd-menu-item${isDashboardActive ? " active" : ""}`}>
