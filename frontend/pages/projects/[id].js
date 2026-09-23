@@ -15,7 +15,6 @@ import { useAuth } from "../../lib/auth";
 import { useTaskFlowSocket } from "../../hooks/useSocket";
 
 const COLUMNS = ["To Do", "In Progress", "Done"];
-const PAGE_SIZE = 10;
 
 export default function ProjectPage() {
   return (
@@ -37,12 +36,24 @@ function ProjectInner() {
   const [state, setState] = useState("loading");
   const [error, setError] = useState("");
 
-  // Backlog controls
+  // Backlog controls — server-side (spec item 14): every change hits
+  // GET /projects/{id}/tasks?status&priority&assignee_id&search&sort&order&page.
   const [search, setSearch] = useState("");
+  const [debouncedSearch, setDebouncedSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [priorityFilter, setPriorityFilter] = useState("all");
+  const [assigneeFilter, setAssigneeFilter] = useState("all");
   const [sort, setSort] = useState("created_desc");
   const [page, setPage] = useState(1);
+  const [backlog, setBacklog] = useState([]);
+  const [backlogMeta, setBacklogMeta] = useState({ total: 0, total_pages: 1 });
+  const [backlogState, setBacklogState] = useState("idle");
+  const [backlogError, setBacklogError] = useState("");
+
+  useEffect(() => {
+    const t = setTimeout(() => setDebouncedSearch(search.trim()), 350);
+    return () => clearTimeout(t);
+  }, [search]);
 
   // Modals / dnd
   const [modalTask, setModalTask] = useState(undefined); // undefined=closed, null=new, object=edit
@@ -86,9 +97,53 @@ function ProjectInner() {
     } catch {}
   }, [id]);
 
-  // Live updates from WS — REST refetch keeps UI correct even after reconnects.
+  // Server-side backlog fetch. Board columns above keep using the full
+  // `tasks` list; this list is the paginated/sorted/filtered backlog view.
+  const loadBacklog = useCallback(async () => {
+    if (!id) return;
+    setBacklogState("loading");
+    setBacklogError("");
+    const params = new URLSearchParams({ page: String(page), per_page: "10" });
+    if (statusFilter !== "all") params.set("status", statusFilter);
+    if (priorityFilter !== "all") params.set("priority", priorityFilter);
+    if (assigneeFilter !== "all") params.set("assignee_id", assigneeFilter);
+    if (debouncedSearch) params.set("search", debouncedSearch);
+    const sortMap = {
+      created_desc: ["created_at", "desc"],
+      created_asc: ["created_at", "asc"],
+      due_asc: ["due_date", "asc"],
+      due_desc: ["due_date", "desc"],
+      priority: ["priority", "desc"],
+    };
+    const [sortField, sortOrder] = sortMap[sort] || ["created_at", "desc"];
+    params.set("sort", sortField);
+    params.set("order", sortOrder);
+    try {
+      const res = await apiGet(`/api/v1/projects/${id}/tasks?${params.toString()}`);
+      const list = Array.isArray(res) ? res : res?.items || res?.tasks || res || [];
+      const items = Array.isArray(list) ? list : [];
+      setBacklog(items);
+      setBacklogMeta({
+        total: res?.meta?.total ?? items.length,
+        total_pages: res?.meta?.total_pages ?? 1,
+      });
+      setBacklogState("done");
+    } catch (err) {
+      setBacklogError(getErrorMessage(err));
+      setBacklogState("error");
+    }
+  }, [id, page, statusFilter, priorityFilter, assigneeFilter, debouncedSearch, sort]);
+
   useEffect(() => {
-    if (lastEvent) refreshTasks();
+    if (id) loadBacklog();
+  }, [id, loadBacklog]);
+
+  // Live updates: board refetch + backlog refetch stay consistent.
+  useEffect(() => {
+    if (lastEvent) {
+      refreshTasks();
+      loadBacklog();
+    }
   }, [lastEvent?._receivedAt]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const members = useMemo(() => {
@@ -105,38 +160,10 @@ function ProjectInner() {
   }, [members, project, user]);
   const isOwner = myRole === "owner";
 
-  // Client-side backlog filtering (also sent to server when supported).
-  const filtered = useMemo(() => {
-    const q = search.trim().toLowerCase();
-    let list = tasks.filter((t) => {
-      if (statusFilter !== "all" && t.status !== statusFilter) return false;
-      if (priorityFilter !== "all" && t.priority !== priorityFilter) return false;
-      if (q && !(`${t.title || ""} ${t.description || ""}`.toLowerCase().includes(q))) return false;
-      return true;
-    });
-    const prioRank = { High: 0, Medium: 1, Low: 2 };
-    list = [...list].sort((a, b) => {
-      switch (sort) {
-        case "due_asc":
-          return new Date(a.due_date || "9999") - new Date(b.due_date || "9999");
-        case "due_desc":
-          return new Date(b.due_date || "9999") - new Date(a.due_date || "9999");
-        case "priority":
-          return (prioRank[a.priority] ?? 9) - (prioRank[b.priority] ?? 9);
-        case "title":
-          return String(a.title).localeCompare(String(b.title));
-        case "created_asc":
-          return new Date(a.created_at || 0) - new Date(b.created_at || 0);
-        default:
-          return new Date(b.created_at || 0) - new Date(a.created_at || 0);
-      }
-    });
-    return list;
-  }, [tasks, search, statusFilter, priorityFilter, sort]);
-
-  const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
-  const safePage = Math.min(page, totalPages);
-  const pageItems = filtered.slice((safePage - 1) * PAGE_SIZE, safePage * PAGE_SIZE);
+  // Backlog rows come from the server (loadBacklog). Board columns below
+  // keep using the full `tasks` list fetched for the kanban view.
+  const safePage = Math.max(1, page);
+  const totalPages = Math.max(1, backlogMeta.total_pages || 1);
 
   const byStatus = useMemo(() => {
     const map = { "To Do": [], "In Progress": [], Done: [] };
@@ -161,6 +188,7 @@ function ProjectInner() {
     try {
       await apiPatch(`/api/v1/projects/${id}/tasks/${taskId}`, { status: nextStatus });
       refreshTasks();
+      loadBacklog();
     } catch (err) {
       setTasks((cur) => cur.map((t) => (t.id === taskId ? { ...t, status: prev.status } : t)));
       setError(getErrorMessage(err));
@@ -247,7 +275,7 @@ function ProjectInner() {
 
             <div className="grid grid-2" style={{ marginTop: "1.5rem" }}>
               <section className="card" aria-label="Backlog">
-                <h2 style={{ fontSize: "1.1rem" }}>Backlog</h2>
+                <h2 style={{ fontSize: "1.1rem" }}>Backlog <span className="small muted">· server-side · {backlogMeta.total} total</span></h2>
                 <div className="toolbar">
                   <input
                     id="backlog-search"
@@ -264,20 +292,30 @@ function ProjectInner() {
                     <option value="Medium">Medium</option>
                     <option value="Low">Low</option>
                   </select>
+                  <select className="select" value={assigneeFilter} onChange={(e) => { setAssigneeFilter(e.target.value); setPage(1); }} aria-label="Filter by assignee">
+                    <option value="all">All assignees</option>
+                    <option value="unassigned" disabled>— pick a member —</option>
+                    {members.map((m) => (
+                      <option key={m.user_id || m.id} value={m.user_id || m.id}>{m.name || m.email}</option>
+                    ))}
+                  </select>
                   <select className="select" value={sort} onChange={(e) => setSort(e.target.value)} aria-label="Sort tasks">
                     <option value="created_desc">Newest</option>
                     <option value="created_asc">Oldest</option>
                     <option value="due_asc">Due soon</option>
                     <option value="due_desc">Due later</option>
                     <option value="priority">Priority</option>
-                    <option value="title">Title A–Z</option>
                   </select>
                 </div>
-                {pageItems.length === 0 ? (
+                {backlogState === "loading" ? (
+                  <p className="muted small">Loading backlog…</p>
+                ) : backlogState === "error" ? (
+                  <p className="form-error">{backlogError || "Could not load backlog."} <button className="btn btn-ghost btn-sm" onClick={loadBacklog}>Retry</button></p>
+                ) : backlog.length === 0 ? (
                   <p className="muted small">No tasks match these filters.</p>
                 ) : (
                   <div className="stack">
-                    {pageItems.map((t) => (
+                    {backlog.map((t) => (
                       <div key={t.id} className="spread" style={{ borderBottom: "1px solid var(--color-border)", paddingBottom: "0.6rem" }}>
                         <button className="nav-link" style={{ textAlign: "left", color: "var(--color-fg)" }} onClick={() => setModalTask(t)}>
                           <strong className="small">{t.title}</strong>
@@ -342,10 +380,12 @@ function ProjectInner() {
             onSaved={() => {
               setModalTask(undefined);
               refreshTasks();
+              loadBacklog();
             }}
             onDeleted={() => {
               setModalTask(undefined);
               refreshTasks();
+              loadBacklog();
             }}
           />
         ) : null}
