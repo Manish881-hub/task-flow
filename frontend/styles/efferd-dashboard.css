@@ -47,7 +47,7 @@
 }
 
 .efferd-sidebar {
-  width: 250px; flex: none;
+  width: 230px; flex: 0 0 230px;
   /* Removed old CSS since Tailwind is now handling EfferdSidebar.js directly */
 }
 .efferd-sidebar.collapsed { width: 76px; }
@@ -286,4 +286,190 @@
   
   .efferd-dashboard-grid { grid-template-columns: 1fr; }
   .efferd-insights-grid { grid-template-columns: 1fr; }
+}
+
+
+/* Custom dashboard scoped layout classes */
+.efferd-dashboard-content {
+  width: 100%;
+  padding: 0 32px;
+}
+
+.efferd-dashboard-grid-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 360px;
+  gap: 1.5rem;
+}
+
+.efferd-header {
+  height: 64px;
+  border-bottom: 1px solid #242424;
+  display: flex;
+  align-items: center;
+  padding: 0 32px;
+}
+
+.efferd-section {
+  padding: 24px 0;
+  border-bottom: 1px solid #242424;
+}
+.efferd-section:last-child {
+  border-bottom: none;
+}
+
+.efferd-metric-row {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  border-bottom: 1px solid #242424;
+}
+
+.efferd-metric-item {
+  padding: 24px 16px;
+  border-right: 1px solid #242424;
+}
+.efferd-metric-item:last-child {
+  border-right: none;
+}
+
+.efferd-task-item {
+  background: transparent;
+  border: 1px solid #242424;
+  border-radius: 6px;
+  padding: 16px;
+  margin-bottom: 12px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.efferd-right-rail-section {
+  padding: 24px 0;
+  border-bottom: 1px solid #242424;
+}
+.efferd-right-rail-section:last-child {
+  border-bottom: none;
+}
+
+.efferd-card {
+  background: transparent;
+  border: 1px solid #242424;
+  border-radius: 6px;
+  padding: 1.25rem;
+}
+
+/* ---- Dashboard (Efferd information architecture) ----
+   Geometry target at 1920x970: rail 360px, header 64px, content starts
+   ~20px below header, KPI strip ~110px, primary chart ~355px. */
+.dash-wrap { padding: 20px 30px 24px; min-width: 0; }
+.dash-head {
+  display: flex; justify-content: space-between; align-items: flex-end;
+  gap: 1rem; flex-wrap: wrap; margin-bottom: 1.25rem;
+}
+.dash-title { margin: 0 0 0.15rem; font-size: 1.5rem; letter-spacing: -0.02em; color: #f5f5f5; }
+.dash-subtitle { margin: 0; font-size: 0.85rem; color: #888888; }
+.dash-controls { display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap; }
+.dash-select {
+  background: #242424; color: #f5f5f5; border: 1px solid #333;
+  border-radius: 8px; padding: 0.4rem 0.6rem; font: inherit; font-size: 0.82rem; cursor: pointer;
+}
+.dash-segment { display: flex; background: #242424; border: 1px solid #333; border-radius: 8px; overflow: hidden; }
+.dash-segment-btn {
+  background: transparent; border: 0; color: #888888; font: inherit;
+  font-size: 0.82rem; font-weight: 700; padding: 0.4rem 0.7rem; cursor: pointer;
+}
+.dash-segment-btn.active { background: #1d70f5; color: #fff; }
+.dash-date { font-size: 0.82rem; color: #888888; white-space: nowrap; }
+.dash-btn-secondary {
+  background: #242424; color: #f5f5f5; border: 1px solid #333;
+  border-radius: 8px; padding: 0.4rem 0.8rem; font: inherit; font-size: 0.82rem;
+  font-weight: 600; cursor: pointer; text-decoration: none; white-space: nowrap;
+  transition: background 150ms ease;
+}
+.dash-btn-secondary:hover { background: #2e2e2e; color: #f5f5f5; }
+.dash-btn-secondary:disabled { opacity: 0.55; cursor: default; }
+.dash-btn-sm { padding: 0.25rem 0.6rem; font-size: 0.78rem; }
+.dash-select:focus-visible, .dash-segment-btn:focus-visible,
+.dash-btn-secondary:focus-visible { outline: 2px solid #1d70f5; outline-offset: 2px; }
+
+.dash-grid { display: grid; grid-template-columns: minmax(0, 1fr) 360px; gap: 1.5rem; align-items: start; }
+.dash-left { display: flex; flex-direction: column; gap: 1.5rem; min-width: 0; }
+.dash-panel {
+  background: #111111; border: 1px solid #242424; border-radius: 10px;
+  padding: 1.25rem; min-width: 0;
+}
+.dash-panel-head { display: flex; justify-content: space-between; align-items: center; gap: 0.75rem; margin-bottom: 1rem; }
+.dash-panel-title { font-size: 1rem; font-weight: 700; color: #f5f5f5; }
+.dash-panel-sub { font-size: 0.78rem; color: #888888; margin-top: 0.15rem; }
+.dash-muted { color: #888888; font-size: 0.85rem; }
+.dash-text-sm { font-size: 0.875rem; }
+
+.dash-kpis { display: grid; grid-template-columns: repeat(3, 1fr); padding: 0; min-height: 110px; }
+.dash-kpi { padding: 1.1rem 1.25rem; border-right: 1px solid #242424; }
+.dash-kpi:last-child { border-right: 0; }
+.dash-kpi-label { font-size: 0.78rem; color: #888888; }
+.dash-kpi-value { font-size: 1.7rem; font-weight: 800; letter-spacing: -0.02em; color: #f5f5f5; margin-top: 0.15rem; }
+.dash-kpi-sub { font-size: 0.75rem; color: #888888; margin-top: 0.2rem; }
+
+.dash-chart { min-height: 355px; }
+.dash-chart-frame { height: 260px; }
+.dash-chart-empty {
+  height: 260px; display: flex; flex-direction: column;
+  align-items: center; justify-content: center; text-align: center;
+  border: 1px dashed #333; border-radius: 8px; padding: 1rem;
+}
+.dash-chart-empty-title { margin: 0 0 0.3rem; font-weight: 700; color: #f5f5f5; }
+.dash-chart-empty-sub { margin: 0; font-size: 0.82rem; color: #888888; max-width: 38ch; }
+
+.dash-split { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; }
+.dash-highlights { list-style: none; margin: 0.75rem 0 0; padding: 0; display: grid; gap: 0.6rem; }
+.dash-highlights li { font-size: 0.85rem; color: #b8b8b8; padding-left: 1rem; position: relative; }
+.dash-highlights li::before { content: ""; position: absolute; left: 0; top: 0.5em; width: 6px; height: 6px; border-radius: 999px; background: #1d70f5; }
+.dash-workload { display: grid; gap: 0.7rem; margin-top: 0.9rem; }
+.dash-workload-row { display: grid; grid-template-columns: 90px 1fr 32px; align-items: center; gap: 0.6rem; }
+.dash-workload-label { font-size: 0.8rem; color: #888888; }
+.dash-workload-track { height: 8px; border-radius: 999px; background: #242424; overflow: hidden; }
+.dash-workload-track span { display: block; height: 100%; border-radius: 999px; }
+.dash-workload-value { font-size: 0.85rem; color: #f5f5f5; text-align: right; }
+
+.dash-project-list { display: grid; max-height: 260px; overflow-y: auto; }
+.dash-project-row {
+  display: flex; justify-content: space-between; align-items: center; gap: 0.75rem;
+  padding: 0.6rem 0; border-bottom: 1px solid #242424;
+}
+.dash-project-row:last-child { border-bottom: 0; }
+.dash-row { display: flex; align-items: center; gap: 0.6rem; }
+
+.dash-rail { display: flex; flex-direction: column; gap: 1.5rem; min-width: 0; }
+.dash-rail-section { margin: 0; }
+.dash-rail-big { font-size: 1.7rem; font-weight: 800; color: #f5f5f5; margin: 0.4rem 0 0.8rem; }
+.dash-radial { display: flex; flex-direction: column; align-items: center; gap: 0.5rem; margin-top: 0.5rem; }
+.dash-legend { list-style: none; margin: 0.75rem 0 0; padding: 0; display: grid; gap: 0.4rem; }
+.dash-legend li { display: flex; align-items: center; gap: 0.5rem; font-size: 0.8rem; color: #b8b8b8; }
+.dash-legend i { width: 8px; height: 8px; border-radius: 999px; flex: none; }
+.dash-legend-center { justify-items: center; }
+.dash-sharebar { display: flex; gap: 2px; height: 10px; border-radius: 999px; overflow: hidden; background: #242424; }
+.dash-sharebar span { display: block; height: 100%; }
+.dash-status-rows { list-style: none; margin: 0.75rem 0 0; padding: 0; display: grid; }
+.dash-status-rows li {
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 0.55rem 0; border-bottom: 1px solid #242424; font-size: 0.85rem; color: #b8b8b8;
+}
+.dash-status-rows li:last-child { border-bottom: 0; }
+.dash-status-rows strong { color: #f5f5f5; }
+.dash-alert { color: #ef4444 !important; }
+
+@media (max-width: 1280px) {
+  .dash-grid { grid-template-columns: 1fr; }
+  .dash-rail { display: grid; grid-template-columns: 1fr 1fr; align-items: start; }
+}
+@media (max-width: 768px) {
+  .dash-wrap { padding: 16px; }
+  .dash-kpis { grid-template-columns: 1fr; }
+  .dash-kpi { border-right: 0; border-bottom: 1px solid #242424; }
+  .dash-kpi:last-child { border-bottom: 0; }
+  .dash-split { grid-template-columns: 1fr; }
+  .dash-rail { grid-template-columns: 1fr; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .dash-btn-secondary { transition: none; }
 }
