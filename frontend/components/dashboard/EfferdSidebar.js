@@ -17,6 +17,7 @@ export default function EfferdSidebar({ currentProjectId, socketStatus }) {
   const [paletteOpen, setPaletteOpen] = useState(false);
   const [accountOpen, setAccountOpen] = useState(false);
   const [wsOpen, setWsOpen] = useState(false);
+  const [updateDismissed, setUpdateDismissed] = useState(false);
   const [projectsList, setProjectsList] = useState([]);
   const [assignedCount, setAssignedCount] = useState(null);
 
@@ -83,18 +84,31 @@ export default function EfferdSidebar({ currentProjectId, socketStatus }) {
         {!collapsed && (
           <button
             type="button"
-            className="efferd-icon-btn"
-            onClick={openPalette}
-            aria-label="Search projects and tasks (Command K)"
-            title="Search (⌘K)"
+            className="efferd-trigger"
+            onClick={() => setCollapsed(true)}
+            aria-label="Collapse sidebar"
+            title="Collapse sidebar"
           >
-            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true">
-              <path d="m21 21-4.34-4.34" />
-              <circle cx="11" cy="11" r="8" />
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+              <rect width="18" height="18" x="3" y="3" rx="2" />
+              <path d="M9 3v18" />
             </svg>
           </button>
         )}
       </div>
+      {collapsed && (
+        <button
+          type="button"
+          className="efferd-trigger efferd-trigger-rail"
+          onClick={() => setCollapsed(false)}
+          aria-label="Expand sidebar"
+          title="Expand sidebar"
+        >
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+            <path d="m9 18 6-6-6-6" />
+          </svg>
+        </button>
+      )}
 
       <div className="menu-wrap efferd-ws-wrap">
         <button
@@ -193,23 +207,74 @@ export default function EfferdSidebar({ currentProjectId, socketStatus }) {
       )}
 
       <div className="efferd-sidebar-foot">
-        <div className="efferd-status-card" role="status" aria-label={`Sync status ${socketStatus || "Connecting"}`}>
-          <span className={`efferd-status-dot${socketStatus === "Live" ? " on" : ""}`} aria-hidden="true" />
-          {!collapsed && (
+        {collapsed ? (
+          <span className="efferd-rail-center" role="status" aria-label={`Sync status ${socketStatus || "Connecting"}`}>
+            <span className={`efferd-status-dot${socketStatus === "Live" ? " on" : ""}`} aria-hidden="true" />
+          </span>
+        ) : (
+          <div className="efferd-status-card" role="status" aria-label={`Sync status ${socketStatus || "Connecting"}`}>
+            <span className={`efferd-status-dot${socketStatus === "Live" ? " on" : ""}`} aria-hidden="true" />
             <span>
               <span className="efferd-status-title">Live sync</span>
               <span className="efferd-status-sub">{socketStatus || "Connecting"}</span>
             </span>
-          )}
-        </div>
-        <div className="efferd-help-links">
-          {!collapsed && (
-            <>
-              <Link href="/#faq">Help Center</Link>
-              <a href="https://github.com/Manish881-hub/task-flow" target="_blank" rel="noopener noreferrer">Documentation</a>
-            </>
-          )}
-        </div>
+          </div>
+        )}
+        {!collapsed && !updateDismissed && (
+          <div className="efferd-update-card">
+            <span className="efferd-eyebrow">Update</span>
+            <p className="efferd-update-title">What&apos;s new</p>
+            <p className="efferd-update-desc">Latest updates and improvements.</p>
+            <a
+              href="https://github.com/Manish881-hub/task-flow"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="efferd-update-link"
+            >
+              Learn more
+            </a>
+            <button
+              type="button"
+              className="efferd-update-dismiss"
+              onClick={() => setUpdateDismissed(true)}
+              aria-label="Dismiss update card"
+            >
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true">
+                <path d="M18 6 6 18" />
+                <path d="m6 6 12 12" />
+              </svg>
+            </button>
+          </div>
+        )}
+        {collapsed ? (
+          <div className="efferd-rail-icons">
+            <Link href="/#faq" className="efferd-rail-icon" aria-label="Help Center" title="Help Center">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                <circle cx="12" cy="12" r="10" />
+                <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3" />
+                <path d="M12 17h.01" />
+              </svg>
+            </Link>
+            <a
+              href="https://github.com/Manish881-hub/task-flow"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="efferd-rail-icon"
+              aria-label="Documentation"
+              title="Documentation"
+            >
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                <path d="M12 5v16" />
+                <path d="M20.001 19A2 2 0 0 0 22 17V5a2 2 0 0 0-1.999-2L16 3.002A5 5 0 0 0 12 5a5 5 0 0 0-4-2H4a2 2 0 0 0-2 2v12a2 2 0 0 0 1.999 2H8a5 5 0 0 1 4 2 5 5 0 0 1 4-2z" />
+              </svg>
+            </a>
+          </div>
+        ) : (
+          <div className="efferd-help-links">
+            <Link href="/#faq">Help Center</Link>
+            <a href="https://github.com/Manish881-hub/task-flow" target="_blank" rel="noopener noreferrer">Documentation</a>
+          </div>
+        )}
         <div className="menu-wrap">
           <button
             type="button"
@@ -235,17 +300,6 @@ export default function EfferdSidebar({ currentProjectId, socketStatus }) {
             </>
           )}
         </div>
-        <button
-          type="button"
-          className="efferd-collapse-btn"
-          onClick={() => setCollapsed((c) => !c)}
-          aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
-          aria-expanded={!collapsed}
-        >
-          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-            {collapsed ? <path d="m9 18 6-6-6-6" /> : <path d="m15 18-6-6 6-6" />}
-          </svg>
-        </button>
       </div>
 
       <SearchPalette open={paletteOpen} onClose={closePalette} />

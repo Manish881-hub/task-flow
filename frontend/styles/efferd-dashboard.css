@@ -74,12 +74,22 @@
   text-decoration: none;
 }
 .efferd-brand-link:hover { background: rgba(255, 255, 255, 0.05); }
-.efferd-icon-btn {
+.efferd-icon-btn,
+.efferd-trigger {
   display: inline-flex; align-items: center; justify-content: center;
   width: 28px; height: 28px; flex: none; border-radius: 8px;
   background: none; border: 0; color: #94a3b8; cursor: pointer;
+  transition: opacity 180ms ease, background 180ms ease, color 180ms ease;
 }
-.efferd-icon-btn:hover { background: rgba(255, 255, 255, 0.06); color: #f8fafc; }
+.efferd-icon-btn:hover,
+.efferd-trigger:hover { background: rgba(255, 255, 255, 0.06); color: #f8fafc; }
+/* Header trigger: hidden until the sidebar is hovered (reference behavior). */
+.efferd-sidebar:not(.collapsed) .efferd-trigger { opacity: 0; }
+.efferd-sidebar:hover .efferd-trigger,
+.efferd-trigger:focus-visible { opacity: 1; }
+/* Collapsed rail trigger lives just under the brand, always reachable. */
+.efferd-trigger-rail { align-self: center; opacity: 0.6; }
+.efferd-trigger-rail:hover { opacity: 1; }
 .efferd-brand-logo { border-radius: 8px; display: block; flex: none; }
 .efferd-brand-text { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
@@ -135,6 +145,36 @@
 .efferd-truncate { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; }
 
 .efferd-sidebar-foot { margin-top: auto; display: grid; gap: 0.4rem; }
+.efferd-rail-center { display: flex; justify-content: center; padding: 0.35rem 0; }
+.efferd-rail-icons { display: grid; justify-items: center; gap: 0.25rem; }
+.efferd-rail-icon {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 28px; height: 28px; border-radius: 8px; color: #94a3b8;
+}
+.efferd-rail-icon:hover { background: rgba(255, 255, 255, 0.06); color: #f8fafc; }
+.efferd-sidebar.collapsed .efferd-account-btn { justify-content: center; padding-left: 0; padding-right: 0; }
+.efferd-update-card {
+  position: relative;
+  background: #111111; border: 1px solid #242424; border-radius: 10px;
+  padding: 0.7rem 0.75rem; display: grid; gap: 0.15rem;
+}
+.efferd-eyebrow {
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 10px; letter-spacing: 0.08em; text-transform: uppercase; color: #777777;
+}
+.efferd-update-title { margin: 0; font-size: 0.78rem; font-weight: 700; color: #f5f5f5; }
+.efferd-update-desc { margin: 0; font-size: 0.72rem; color: #999999; }
+.efferd-update-link { font-size: 0.75rem; font-weight: 600; margin-top: 0.25rem; width: max-content; }
+.efferd-update-dismiss {
+  position: absolute; top: 0.35rem; right: 0.35rem;
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 22px; height: 22px; border-radius: 999px;
+  background: none; border: 0; color: #777777; cursor: pointer; opacity: 0;
+  transition: opacity 180ms ease;
+}
+.efferd-update-card:hover .efferd-update-dismiss,
+.efferd-update-dismiss:focus-visible { opacity: 1; }
+.efferd-update-dismiss:hover { color: #f5f5f5; }
 .efferd-status-card {
   display: flex; align-items: center; gap: 0.6rem;
   background: #09090b; border: 1px solid #23262f; border-radius: 10px;
@@ -168,12 +208,6 @@
 .efferd-account-menu .menu-item { color: #f8fafc; }
 .efferd-account-menu .menu-item:hover { background: rgba(255, 255, 255, 0.06); }
 .efferd-account-menu .menu-head { border-color: #343945; }
-.efferd-collapse-btn {
-  display: flex; align-items: center; justify-content: center;
-  padding: 0.45rem; border-radius: 10px;
-  background: none; border: 1px solid #23262f; color: #94a3b8; cursor: pointer;
-}
-.efferd-collapse-btn:hover { color: #f8fafc; border-color: #343945; }
 
 /* Real-data stats strip (DashboardStats): counts + status bars, no fake data. */
 .efferd-stats { display: grid; gap: 0.9rem; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); }
@@ -566,4 +600,5 @@
 }
 @media (prefers-reduced-motion: reduce) {
   .dash-btn-secondary { transition: none; }
+  .efferd-trigger, .efferd-update-dismiss { transition: none; }
 }
