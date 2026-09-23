@@ -1,0 +1,3 @@
+interface:
+  display_name: "Clone Site"
+  short_description: "Rebuild a website's design as a new project"

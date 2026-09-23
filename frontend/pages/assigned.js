@@ -1,13 +1,27 @@
 import Head from "next/head";
 import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
-import EfferdSidebar from "../components/dashboard/EfferdSidebar";
+import { AppSidebar } from "../components/app-sidebar";
 import RequireAuth from "../components/RequireAuth";
 import EmptyState from "../components/EmptyState";
 import Skeleton from "../components/Skeleton";
 import ErrorBanner from "../components/ErrorBanner";
 import { apiGet, getErrorMessage } from "../lib/api";
 import { useTaskFlowSocket } from "../hooks/useSocket";
+import {
+  Breadcrumb,
+  BreadcrumbItem,
+  BreadcrumbLink,
+  BreadcrumbList,
+  BreadcrumbPage,
+  BreadcrumbSeparator,
+} from "../components/ui/breadcrumb";
+import { Separator } from "../components/ui/separator";
+import {
+  SidebarInset,
+  SidebarProvider,
+  SidebarTrigger,
+} from "../components/ui/sidebar";
 
 export default function Assigned() {
   return (
@@ -51,58 +65,79 @@ function AssignedInner() {
   const visible = tasks.filter((t) => (filter === "all" ? true : t.status === filter));
 
   return (
-    <div className="efferd-layout">
+    <div className="dark">
       <Head><title>Assigned to me — TaskFlow</title></Head>
-      <EfferdSidebar socketStatus={socketStatus} />
-      <main className="efferd-main">
-        <div className="container main">
-        <div className="spread" style={{ marginBottom: "1rem" }}>
-          <div>
-            <h1 style={{ marginBottom: "0.2rem" }}>Assigned to me</h1>
-            <p className="muted" style={{ margin: 0 }}>Every task assigned to you, across all projects.</p>
-          </div>
-          <select className="select" value={filter} onChange={(e) => setFilter(e.target.value)} aria-label="Filter by status">
-            <option value="all">All statuses</option>
-            <option value="To Do">To Do</option>
-            <option value="In Progress">In Progress</option>
-            <option value="Done">Done</option>
-          </select>
-        </div>
-
-        <ErrorBanner message={error} onRetry={load} onDismiss={() => setError("")} />
-
-        {state === "loading" ? (
-          <div className="stack"><Skeleton lines={4} /><Skeleton lines={4} /></div>
-        ) : state === "error" && tasks.length === 0 ? (
-          <EmptyState title="Could not load tasks" hint="Check your connection and retry." action={<button className="btn btn-primary" onClick={load}>Retry</button>} />
-        ) : visible.length === 0 ? (
-          <EmptyState title="Nothing here" hint={tasks.length ? "No tasks match this filter." : "No tasks are assigned to you yet."} />
-        ) : (
-          <div className="stack">
-            {visible.map((t) => (
-              <div key={t.id} className="card spread">
+      <SidebarProvider>
+        <AppSidebar />
+        <SidebarInset>
+          <header className="flex h-16 shrink-0 items-center gap-2">
+            <div className="flex items-center gap-2 px-4">
+              <SidebarTrigger className="-ml-1" />
+              <Separator orientation="vertical" className="mr-2 data-[orientation=vertical]:h-4" />
+              <Breadcrumb>
+                <BreadcrumbList>
+                  <BreadcrumbItem className="hidden md:block">
+                    <BreadcrumbLink href="/dashboard">TaskFlow</BreadcrumbLink>
+                  </BreadcrumbItem>
+                  <BreadcrumbSeparator className="hidden md:block" />
+                  <BreadcrumbItem>
+                    <BreadcrumbPage>Assigned to me</BreadcrumbPage>
+                  </BreadcrumbItem>
+                </BreadcrumbList>
+              </Breadcrumb>
+            </div>
+          </header>
+          <div className="flex flex-1 flex-col gap-4 p-4 pt-0">
+            <div className="container main">
+              <div className="spread" style={{ marginBottom: "1rem" }}>
                 <div>
-                  <strong>{t.title}</strong>
-                  <div className="small muted">
-                    {t.project_name || t.project_id ? (
-                      <span>Project: {t.project_name || String(t.project_id).slice(0, 8)} · </span>
-                    ) : null}
-                    {t.priority ? <span>{t.priority} · </span> : null}
-                    {t.due_date ? <span>Due {new Date(t.due_date).toLocaleDateString()}</span> : null}
-                  </div>
+                  <h1 style={{ marginBottom: "0.2rem" }}>Assigned to me</h1>
+                  <p className="muted" style={{ margin: 0 }}>Every task assigned to you, across all projects.</p>
                 </div>
-                <span className="row">
-                  <span className="badge badge-green">{t.status}</span>
-                  {t.project_id ? (
-                    <Link href={`/projects/${t.project_id}`} className="btn btn-ghost btn-sm">Open</Link>
-                  ) : null}
-                </span>
+                <select className="select" value={filter} onChange={(e) => setFilter(e.target.value)} aria-label="Filter by status">
+                  <option value="all">All statuses</option>
+                  <option value="To Do">To Do</option>
+                  <option value="In Progress">In Progress</option>
+                  <option value="Done">Done</option>
+                </select>
               </div>
-            ))}
+
+              <ErrorBanner message={error} onRetry={load} onDismiss={() => setError("")} />
+
+              {state === "loading" ? (
+                <div className="stack"><Skeleton lines={4} /><Skeleton lines={4} /></div>
+              ) : state === "error" && tasks.length === 0 ? (
+                <EmptyState title="Could not load tasks" hint="Check your connection and retry." action={<button className="btn btn-primary" onClick={load}>Retry</button>} />
+              ) : visible.length === 0 ? (
+                <EmptyState title="Nothing here" hint={tasks.length ? "No tasks match this filter." : "No tasks are assigned to you yet."} />
+              ) : (
+                <div className="stack">
+                  {visible.map((t) => (
+                    <div key={t.id} className="card spread">
+                      <div>
+                        <strong>{t.title}</strong>
+                        <div className="small muted">
+                          {t.project_name || t.project_id ? (
+                            <span>Project: {t.project_name || String(t.project_id).slice(0, 8)} · </span>
+                          ) : null}
+                          {t.priority ? <span>{t.priority} · </span> : null}
+                          {t.due_date ? <span>Due {new Date(t.due_date).toLocaleDateString()}</span> : null}
+                        </div>
+                      </div>
+                      <span className="row">
+                        <span className="badge badge-green">{t.status}</span>
+                        {t.project_id ? (
+                          <Link href={`/projects/${t.project_id}`} className="btn btn-ghost btn-sm">Open</Link>
+                        ) : null}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
           </div>
-        )}
-        </div>
-      </main>
+        </SidebarInset>
+      </SidebarProvider>
     </div>
   );
 }

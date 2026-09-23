@@ -3,20 +3,54 @@
    Rail: #16181d · border #23262f · text #f8fafc · muted #94a3b8 ·
    faint #64748b · input #09090b · accent #1d70f5 (matches app blue theme). */
 
-.efferd-layout { display: flex; min-height: 100dvh; align-items: stretch; }
+.efferd-layout {
+  --background: oklch(0.145 0 0);
+  --foreground: oklch(0.985 0 0);
+  --card: oklch(0.205 0 0);
+  --card-foreground: oklch(0.985 0 0);
+  --popover: oklch(0.205 0 0);
+  --popover-foreground: oklch(0.985 0 0);
+  --primary: oklch(0.922 0 0);
+  --primary-foreground: oklch(0.205 0 0);
+  --secondary: oklch(0.269 0 0);
+  --secondary-foreground: oklch(0.985 0 0);
+  --muted: oklch(0.269 0 0);
+  --muted-foreground: oklch(0.708 0 0);
+  --accent: oklch(0.269 0 0);
+  --accent-foreground: oklch(0.985 0 0);
+  --destructive: oklch(0.704 0.191 22.216);
+  --border: oklch(1 0 0 / 10%);
+  --input: oklch(1 0 0 / 15%);
+  --ring: oklch(0.556 0 0);
+  --chart-1: oklch(0.87 0 0);
+  --chart-2: oklch(0.556 0 0);
+  --chart-3: oklch(0.439 0 0);
+  --chart-4: oklch(0.371 0 0);
+  --chart-5: oklch(0.269 0 0);
+  --sidebar: oklch(0.145 0 0);
+  --sidebar-border: oklch(1 0 0 / 10%);
+  display: flex; min-height: 100dvh; align-items: stretch;
+  background-color: #09090b;
+}
 
-.efferd-main { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+.efferd-main { 
+  flex: 1; 
+  min-width: 0; 
+  display: flex; 
+  flex-direction: column;
+  background-color: var(--background, #09090b);
+  border: 1px solid var(--border, #23262f);
+  border-radius: 12px;
+  margin: 0.5rem 0.5rem 0.5rem 0;
+  overflow: hidden;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+}
 
 .efferd-sidebar {
-  width: 248px; flex: none;
-  background: #16181d; border-right: 1px solid #23262f;
-  color: #f8fafc;
-  display: flex; flex-direction: column; gap: 0.9rem;
-  padding: 1rem 0.75rem;
-  position: sticky; top: 0; height: 100dvh; overflow-y: auto;
-  transition: width 180ms ease;
+  width: 250px; flex: none;
+  /* Removed old CSS since Tailwind is now handling EfferdSidebar.js directly */
 }
-.efferd-sidebar.collapsed { width: 76px; align-items: stretch; }
+.efferd-sidebar.collapsed { width: 76px; }
 
 .efferd-brand-link {
   display: flex; align-items: center; gap: 0.6rem;
@@ -114,18 +148,124 @@
 /* Real-data stats strip (DashboardStats): counts + status bars, no fake data. */
 .efferd-stats { display: grid; gap: 0.9rem; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); }
 .efferd-stat-card {
-  background: var(--color-card); border: 1px solid var(--color-border);
-  border-radius: var(--radius-md); padding: 1rem 1.1rem;
+  background: var(--color-card, #16181d); border: 1px solid var(--color-border, #23262f);
+  border-radius: var(--radius-md, 10px); padding: 1rem 1.1rem;
 }
-.efferd-stat-label { font-size: 0.78rem; font-weight: 700; color: var(--color-muted); }
+.efferd-stat-label { font-size: 0.78rem; font-weight: 700; color: var(--color-muted, #94a3b8); }
 .efferd-stat-value { font-size: 1.6rem; font-weight: 800; letter-spacing: -0.02em; margin: 0.15rem 0 0.6rem; }
-.efferd-stat-bar { height: 8px; border-radius: 999px; background: var(--color-bg); overflow: hidden; display: flex; }
+.efferd-stat-bar { height: 8px; border-radius: 999px; background: var(--color-bg, #09090b); overflow: hidden; display: flex; }
 .efferd-stat-fill { height: 100%; }
 .efferd-stat-fill.todo { background: #94a3b8; }
-.efferd-stat-fill.progress { background: var(--color-primary); }
-.efferd-stat-fill.done { background: var(--color-success-strong); }
-.efferd-stat-legend { display: flex; gap: 0.8rem; margin-top: 0.5rem; font-size: 0.75rem; color: var(--color-muted); }
+.efferd-stat-fill.progress { background: var(--color-primary, #1d70f5); }
+.efferd-stat-fill.done { background: var(--color-success-strong, #10b981); }
+.efferd-stat-legend { display: flex; gap: 0.8rem; margin-top: 0.5rem; font-size: 0.75rem; color: var(--color-muted, #94a3b8); }
 .efferd-stat-legend i { display: inline-block; width: 8px; height: 8px; border-radius: 999px; margin-right: 0.3rem; }
+
+/* Dashboard layout grid */
+.efferd-dashboard-grid {
+  display: grid;
+  grid-template-columns: 1fr 340px;
+  gap: 1.5rem;
+  padding: 1.5rem;
+  color: var(--foreground);
+  background-color: var(--background);
+  min-height: 100vh;
+}
+
+.efferd-left-col {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.efferd-right-col {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.efferd-panel {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 1.25rem;
+}
+
+.efferd-text-muted { color: #94a3b8; }
+.efferd-text-green { color: #22c55e; }
+.efferd-text-red { color: #ef4444; }
+.efferd-text-sm { font-size: 0.875rem; }
+.efferd-text-xs { font-size: 0.75rem; }
+.efferd-font-semibold { font-weight: 600; }
+.efferd-font-bold { font-weight: 700; }
+
+.efferd-top-stats {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+}
+
+.efferd-top-stat-item {
+  border-right: 1px solid var(--border);
+  padding-right: 1rem;
+  padding-left: 1rem;
+}
+.efferd-top-stat-item:first-child { padding-left: 0; }
+.efferd-top-stat-item:last-child { border-right: none; padding-right: 0; }
+
+.efferd-flex-between { display: flex; justify-content: space-between; align-items: center; }
+.efferd-flex-start { display: flex; align-items: center; gap: 0.5rem; }
+
+.efferd-chart-container {
+  height: 250px;
+  margin-top: 1rem;
+}
+
+.efferd-insights-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.5rem;
+}
+
+.efferd-progress-bg { background: #23262f; height: 8px; border-radius: 4px; overflow: hidden; width: 100%; display: flex; }
+.efferd-progress-fill { height: 100%; }
+.efferd-dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; }
+
+.efferd-button {
+  background: #1c1f26;
+  border: 1px solid #343945;
+  color: #f8fafc;
+  padding: 0.5rem 1rem;
+  border-radius: 8px;
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+  width: 100%;
+}
+.efferd-button:hover { background: #23262f; }
+
+.efferd-list-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.75rem 0;
+  border-bottom: 1px solid var(--border);
+}
+.efferd-list-item:last-child { border-bottom: none; padding-bottom: 0; }
+
+.efferd-icon-wrapper {
+  color: #94a3b8;
+  display: flex;
+  align-items: center;
+}
+
+.efferd-badge {
+  background: #1c1f26;
+  border: 1px solid #343945;
+  padding: 0.1rem 0.4rem;
+  border-radius: 999px;
+  font-size: 0.75rem;
+}
 
 /* Small screens: rail becomes a horizontal top strip (pure CSS, no JS). */
 @media (max-width: 1023px) {
@@ -143,4 +283,7 @@
   .efferd-search-btn { width: auto; }
   .efferd-sidebar-foot { margin-top: 0; margin-left: auto; display: flex; align-items: center; }
   .efferd-sidebar.collapsed { width: 100%; }
+  
+  .efferd-dashboard-grid { grid-template-columns: 1fr; }
+  .efferd-insights-grid { grid-template-columns: 1fr; }
 }
