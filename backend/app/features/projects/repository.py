@@ -18,6 +18,25 @@ def list_projects_for_user(db: Session, user_id: uuid.UUID):
     )
 
 
+def list_projects_for_user_paginated(db: Session, user_id: uuid.UUID, page: int, per_page: int):
+    """Server-side pagination: COUNT + LIMIT/OFFSET in SQL, never slice in Python."""
+    from sqlalchemy import func as _func
+
+    base = (
+        db.query(Project)
+        .join(ProjectMember, ProjectMember.project_id == Project.id)
+        .filter(ProjectMember.user_id == user_id)
+    )
+    total = base.with_entities(_func.count(Project.id)).scalar() or 0
+    rows = (
+        base.order_by(Project.created_at.desc())
+        .offset((page - 1) * per_page)
+        .limit(per_page)
+        .all()
+    )
+    return rows, int(total)
+
+
 def get_project(db: Session, project_id: uuid.UUID) -> Project | None:
     return db.get(Project, project_id)
 

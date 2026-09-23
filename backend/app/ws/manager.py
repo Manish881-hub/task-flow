@@ -26,6 +26,26 @@ class ConnectionManager:
             self.users[user_id].discard(ws)
         for room in self.rooms.values():
             room.discard(ws)
+        self._gc_rooms()
+
+    def remove_user_from_project(self, user_id: str, project_id: str) -> None:
+        """Evict every socket of user_id from one project room.
+
+        Called right after membership revocation so a removed member stops
+        receiving live board events immediately instead of lingering until
+        their socket drops.
+        """
+        room = self.rooms.get(project_id)
+        if not room:
+            return
+        for ws in list(self.users.get(user_id, set())):
+            room.discard(ws)
+        self._gc_rooms()
+
+    def _gc_rooms(self) -> None:
+        empty = [pid for pid, room in self.rooms.items() if not room]
+        for pid in empty:
+            del self.rooms[pid]
 
     async def join(self, ws: WebSocket, user_id: str, project_id: str) -> None:
         self.rooms[project_id].add(ws)

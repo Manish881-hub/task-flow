@@ -38,10 +38,7 @@ def list_projects(
     db: Session = Depends(get_db),
     user=Depends(get_current_user),
 ):
-    all_projects = repo.list_projects_for_user(db, user.id)
-    total = len(all_projects)
-    start = (page - 1) * per_page
-    chunk = all_projects[start: start + per_page]
+    chunk, total = repo.list_projects_for_user_paginated(db, user.id, page, per_page)
     return _page([project_out(p) for p in chunk], total, page, per_page, "/api/v1/projects")
 
 
@@ -144,6 +141,8 @@ async def remove_member(
     svc.remove_member(db, project_id, user.id, user_id)
     from app.ws.manager import manager
 
+    # Stop the removed member's sockets hearing this room immediately.
+    manager.remove_user_from_project(str(user_id), str(project_id))
     await manager.broadcast_to_project(
         str(project_id),
         {"type": "member_removed", "project_id": str(project_id), "user_id": str(user_id)},
