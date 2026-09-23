@@ -74,9 +74,13 @@ function DashboardInner() {
   const [projectFilter, setProjectFilter] = useState("all");
   const [refreshing, setRefreshing] = useState(false);
 
-  const load = useCallback(async () => {
-    setState("loading");
-    setError("");
+  const load = useCallback(async (silent = false) => {
+    // Silent background refreshes (socket events, Refresh button) must
+    // never flash skeletons over live content — only the first load does.
+    if (!silent) {
+      setState("loading");
+      setError("");
+    }
     try {
       const [projData, dash] = await Promise.all([
         apiGet("/api/v1/projects?per_page=100"),
@@ -98,8 +102,9 @@ function DashboardInner() {
       setHistory(events);
       setState("done");
     } catch (err) {
+      // Background failures surface as a banner; content stays on screen.
       setError(getErrorMessage(err));
-      setState("error");
+      if (!silent) setState("error");
     }
   }, []);
 
@@ -107,16 +112,16 @@ function DashboardInner() {
     load();
   }, [load]);
 
-  // Live hint: any socket event triggers a lightweight refetch.
+  // Live hint: silent refetch so the board never flickers on events.
   useEffect(() => {
     if (!lastEvent) return;
-    load();
+    load(true);
   }, [lastEvent?._receivedAt]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const refresh = async () => {
     setRefreshing(true);
     try {
-      await load();
+      await load(true);
     } finally {
       setRefreshing(false);
     }
@@ -143,8 +148,8 @@ function DashboardInner() {
       const p = created?.project || created;
       if (p && p.id) {
         setProjects((prev) => [p, ...prev]);
-        load();
-      } else load();
+        load(true);
+      } else load(true);
       setNewName("");
       setNewDesc("");
       setShowCreate(false);
@@ -161,7 +166,7 @@ function DashboardInner() {
     try {
       await apiDelete(`/api/v1/projects/${id}`);
       setProjects((prev) => prev.filter((p) => p.id !== id));
-      load();
+      load(true);
     } catch (err) {
       setError(getErrorMessage(err));
     } finally {
