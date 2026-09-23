@@ -545,12 +545,13 @@
    ~20px below header, KPI strip ~110px, primary chart ~355px. */
 .dash-wrap { padding: 20px 30px 24px; min-width: 0; }
 .dash-head {
-  display: flex; justify-content: space-between; align-items: flex-end;
-  gap: 1rem; flex-wrap: wrap; margin-bottom: 1.25rem;
+  display: flex; justify-content: space-between; align-items: flex-start;
+  gap: 1rem; flex-wrap: wrap;
+  min-height: 78px; padding-top: 18px; padding-bottom: 14px; margin-bottom: 4px;
 }
-.dash-title { margin: 0 0 0.15rem; font-size: 1.5rem; letter-spacing: -0.02em; color: #f5f5f5; }
-.dash-subtitle { margin: 0; font-size: 0.85rem; color: #888888; }
-.dash-controls { display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap; }
+.dash-title { margin: 0; font-size: 24px; line-height: 1.2; font-weight: 500; letter-spacing: -0.02em; color: #f5f5f5; }
+.dash-subtitle { margin: 3px 0 0; font-size: 13px; color: #888888; }
+.dash-controls { display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap; padding-top: 2px; }
 .dash-select {
   background: #242424; color: #f5f5f5; border: 1px solid #333;
   border-radius: 8px; padding: 0.4rem 0.6rem; font: inherit; font-size: 0.82rem; cursor: pointer;
