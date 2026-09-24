@@ -376,14 +376,16 @@
 }
 
 /* spec class .dashboard-preview + legacy .tuf-dash-preview both work
-   Desktop: bottom -560 (hero 780, preview ~700 tall => top ~640) keeps headline/CTA visible
-   Previous -140 caused top ~220 and covered hero content.
+   FIX 2: dashboard was too low (bottom -560) showing only top strip.
+   Real dashboard 1770x888 (~0.5 aspect) at 1080 wide => ~542 tall.
+   With hero 780 and bottom -300, top ~538 (242px above hero bottom) so
+   substantial dashboard visible in first viewport while headline/CTA stay clear.
 */
 .dashboard-preview,
 .tuf-dash-preview {
   position: absolute;
   left: 50%;
-  bottom: -560px;
+  bottom: -300px;
   transform: translateX(-50%);
   z-index: 10;
   width: min(1080px, 88vw);
@@ -438,10 +440,11 @@
 
 /* ------------------------------------------------------------------
    Responsive — spec:
-   tablet: hero ~700px, preview bottom:-420px, headline smaller, 92vw
-   mobile: hero ~650px, preview bottom:-220px, 96vw, no overflow, reduce overlap
-   IMPORTANT: hero is fixed stage (height), preview absolutely anchored
-   Fixes previous -100/-60 that still caused hero cover at 92vw preview
+   tablet: hero ~700px, preview bottom:-220px (scaled for real 1770x888 ~0.5 ratio),
+           headline smaller, 92vw. Keeps ~150px breathing space above hero bottom.
+   mobile: hero ~650px, preview bottom:-140px, 96vw
+   Real dashboard at 1080 wide ~542 tall, so desktop -300 gives top ~538 (242 above hero).
+   Tablet 92vw ~369 tall with -220 gives top ~510 (190 above hero).
    ------------------------------------------------------------------ */
 @media (max-width: 1024px) {
   .tuf-hero {
@@ -452,12 +455,12 @@
   .dashboard-preview,
   .tuf-dash-preview {
     width: 92vw;
-    bottom: -420px;
+    bottom: -220px;
   }
-  /* tablet white section padding reduces proportionally: hero 700 + preview ~480 tall bottom -420 => padding ~420-460 */
+  /* tablet white section: hero 700 + bottom 220 = preview bottom 920, height ~369 => top 551, padding ~240 */
   .tuf-features-section,
   .features-section {
-    padding-top: 440px;
+    padding-top: 260px;
   }
 }
 
@@ -491,20 +494,20 @@
   }
   .tuf-hero-new-title { font-size: 2.2rem; }
 
-  /* reduce overlap on mobile so preview doesn't cover too much: -180 to -240 => -220 */
+  /* reduce overlap on mobile: real dashboard short, keep ~80px gap above hero bottom */
   .dashboard-preview,
   .tuf-dash-preview {
     width: 96vw;
-    bottom: -220px;
+    bottom: -140px;
     margin: 0;
     border-radius: 14px;
   }
   .tuf-hero-preview-wrap,
   .dashboard-preview-wrap { padding-left: 0; padding-right: 0; }
 
-  /* features section padding for mobile: preview 96vw ~240 tall bottom -220 => ~240 */
+  /* mobile white section: hero 650 + bottom 140 = preview bottom 790, height ~187 => top 603, padding ~180 */
   .tuf-features-section,
-  .features-section { padding-top: 260px; }
+  .features-section { padding-top: 180px; }
 
   /* prevent horizontal scroll from preview shadow */
   .tuf-landing { overflow-x: hidden; }
@@ -861,14 +864,14 @@
    Core Class / Placement Ready Section
    ========================================================================== */
 
-/* Because the real dashboard preview overlaps the hero bottom by ~560px (desktop),
-   the next white section needs extra top padding so heading doesn't collide with floating dashboard
-   Desktop preview bottom -560 => padding ~560; keep 520-580 range, start 560 */
+/* Because the real dashboard preview overlaps the hero bottom by ~300px (desktop, 542 tall),
+   the white section needs padding so heading sits just below preview bottom.
+   Hero bottom 780 + padding 340 = content at 1120, preview bottom 1080 (780+300) => 40px gap. */
 .tuf-features-section,
 .features-section {
   position: relative;
   z-index: 1;
-  padding: 560px 0 5rem 0;
+  padding: 340px 0 5rem 0;
   border-top: 1px solid var(--tuf-slate-100);
   background: #ffffff;
 }
