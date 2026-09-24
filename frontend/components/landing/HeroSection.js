@@ -2,8 +2,7 @@ import Link from "next/link";
 import { useState, useRef, useEffect } from "react";
 import { useAuth } from "../../lib/auth";
 import DashboardPreview from "./DashboardPreview";
-
-const TASKFLOW_CALENDLY_URL = "https://calendly.com/manishbhakti881/30min";
+import BookDemoButton from "./BookDemoButton";
 
 const PRODUCT_ITEMS = [
   { label: "Task Boards", desc: "Organize projects with drag-and-drop boards", href: "#features" },
@@ -87,15 +86,10 @@ export default function HeroSection() {
             ) : (
               <>
                 <Link href="/login" className="tuf-glass-link tuf-glass-link-muted">Log in</Link>
-                <a
-                  href={TASKFLOW_CALENDLY_URL}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="tuf-glass-link tuf-glass-demo"
-                >
+                <BookDemoButton className="tuf-glass-link tuf-glass-demo">
                   Book a demo
                   <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true"><path d="M5 12h14M12 5l7 7-7 7" /></svg>
-                </a>
+                </BookDemoButton>
                 <Link href="/signup" className="tuf-btn-primary tuf-hero-cta">
                   Get started
                 </Link>
@@ -144,12 +138,16 @@ export default function HeroSection() {
               {!isAuthed ? (
                 <div className="tuf-glass-mobile-ctas">
                   <Link href="/login" className="tuf-btn-secondary-lg" onClick={() => setMobileOpen(false)}>Log in</Link>
-                  <a href={TASKFLOW_CALENDLY_URL} target="_blank" rel="noopener noreferrer" className="tuf-btn-secondary-lg" onClick={() => setMobileOpen(false)}>
+                  <BookDemoButton className="tuf-btn-secondary-lg" onAfterClick={() => setMobileOpen(false)}>
                     Book a demo →
-                  </a>
+                  </BookDemoButton>
                   <Link href="/signup" className="tuf-btn-primary" onClick={() => setMobileOpen(false)}>Get started</Link>
                 </div>
-              ) : null}
+              ) : (
+                <div className="tuf-glass-mobile-ctas">
+                  <Link href="/dashboard" className="tuf-btn-primary" onClick={() => setMobileOpen(false)}>Go to Dashboard</Link>
+                </div>
+              )}
             </div>
           </div>
         ) : null}
