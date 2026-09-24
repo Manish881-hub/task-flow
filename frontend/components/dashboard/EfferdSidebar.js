@@ -23,6 +23,16 @@ export default function EfferdSidebar({ currentProjectId, socketStatus }) {
   const [collapsed, setCollapsed] = useState(false);
   const [paletteOpen, setPaletteOpen] = useState(false);
   const [updateDismissed, setUpdateDismissed] = useState(false);
+  // Workspaces are array-shaped so a second workspace later is trivial.
+  // TaskFlow has no workspace entity/API today, so the list holds the
+  // single real workspace and creation stays disabled, never fake.
+  const [workspaces, setWorkspaces] = useState([
+    { id: "taskflow", name: "TaskFlow", plan: "Free", current: true },
+  ]);
+  const currentWs = workspaces.find((w) => w.current) || workspaces[0];
+  const selectWorkspace = useCallback((id) => {
+    setWorkspaces((prev) => prev.map((w) => ({ ...w, current: w.id === id })));
+  }, []);
   const [projectsList, setProjectsList] = useState([]);
   const [assignedCount, setAssignedCount] = useState(null);
 
@@ -108,13 +118,13 @@ export default function EfferdSidebar({ currentProjectId, socketStatus }) {
           <button
             type="button"
             className="efferd-ws-btn"
-            aria-label="Workspace: TaskFlow"
-            title={collapsed ? "Workspace: TaskFlow" : undefined}
+            aria-label={`Workspace: ${currentWs.name}`}
+            title={collapsed ? `Workspace: ${currentWs.name}` : undefined}
           >
-            <span className="efferd-ws-dot" aria-hidden="true">T</span>
+            <span className="efferd-ws-dot" aria-hidden="true">{currentWs.name.charAt(0).toUpperCase()}</span>
             {!collapsed && (
               <>
-                <span className="efferd-truncate efferd-ws-name">TaskFlow</span>
+                <span className="efferd-truncate efferd-ws-name">{currentWs.name}</span>
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
                   <path d="m7 15 5 5 5-5" />
                   <path d="m7 9 5-5 5 5" />
@@ -123,17 +133,33 @@ export default function EfferdSidebar({ currentProjectId, socketStatus }) {
             )}
           </button>
         </DropdownMenuTrigger>
-        <DropdownMenuContent side="right" align="start" sideOffset={8} className="efferd-menu-pop">
-          <div className="efferd-menu-pop-head">
-            <span className="efferd-ws-dot" aria-hidden="true">T</span>
-            <span className="efferd-menu-pop-head-text">
-              <span className="efferd-menu-pop-name">TaskFlow</span>
-              <span className="efferd-menu-pop-email">Personal workspace</span>
-            </span>
-          </div>
+        <DropdownMenuContent side="right" align="start" sideOffset={8} className="efferd-menu-pop efferd-ws-pop">
+          <div className="efferd-menu-pop-eyebrow">Workspaces</div>
+          {workspaces.map((w) => (
+            <DropdownMenuItem
+              key={w.id}
+              className={`efferd-menu-pop-item efferd-ws-item${w.current ? " active" : ""}`}
+              onSelect={() => selectWorkspace(w.id)}
+            >
+              <span className="efferd-ws-avatar" aria-hidden="true">{w.name.charAt(0).toUpperCase()}</span>
+              <span className="efferd-ws-item-text">
+                <span className="efferd-ws-item-name">{w.name}</span>
+                <span className="efferd-ws-item-plan">{w.plan}</span>
+              </span>
+              {w.current && (
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" className="efferd-ws-check">
+                  <path d="M20 6 9 17l-5-5" />
+                </svg>
+              )}
+            </DropdownMenuItem>
+          ))}
           <DropdownMenuSeparator className="efferd-menu-pop-sep" />
-          <DropdownMenuItem className="efferd-menu-pop-item" disabled title="Only one workspace exists">
-            TaskFlow (current)
+          <DropdownMenuItem className="efferd-menu-pop-item" disabled title="Workspace creation is not available yet">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true">
+              <path d="M5 12h14" />
+              <path d="M12 5v14" />
+            </svg>
+            Create new workspace
           </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>

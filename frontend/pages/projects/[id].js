@@ -1,5 +1,5 @@
 import { useRouter } from "next/router";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import EfferdPageShell from "../../components/EfferdPageShell";
 import RequireAuth from "../../components/RequireAuth";
 import TaskCard from "../../components/TaskCard";
@@ -98,9 +98,16 @@ function ProjectInner() {
 
   // Server-side backlog fetch. Board columns above keep using the full
   // `tasks` list; this list is the paginated/sorted/filtered backlog view.
-  const loadBacklog = useCallback(async () => {
+  // Silent refreshes keep existing rows on screen (no "Loading" flash).
+  const backlogRef = useRef([]);
+  useEffect(() => {
+    backlogRef.current = backlog;
+  }, [backlog]);
+  const loadBacklog = useCallback(async (silent = false) => {
     if (!id) return;
-    setBacklogState("loading");
+    if (!silent && backlogRef.current.length === 0) {
+      setBacklogState("loading");
+    }
     setBacklogError("");
     const params = new URLSearchParams({ page: String(page), per_page: "10" });
     if (statusFilter !== "all") params.set("status", statusFilter);
@@ -141,7 +148,7 @@ function ProjectInner() {
   useEffect(() => {
     if (lastEvent) {
       refreshTasks();
-      loadBacklog();
+      loadBacklog(true);
     }
   }, [lastEvent?._receivedAt]); // eslint-disable-line react-hooks/exhaustive-deps
 

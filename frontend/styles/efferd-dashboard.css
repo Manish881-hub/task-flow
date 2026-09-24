@@ -231,6 +231,28 @@
   overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
 }
 .efferd-menu-pop-sep { background: #303030; }
+.efferd-menu-pop-eyebrow {
+  padding: 0.5rem 0.5rem 0.25rem;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 10px; letter-spacing: 0.08em; text-transform: uppercase; color: #777777;
+}
+.efferd-ws-pop { width: 252px; }
+.efferd-ws-item { gap: 0.65rem; }
+.efferd-ws-item.active { background: #2a2a2a; }
+.efferd-ws-item.active[data-highlighted] { background: #333333; }
+.efferd-ws-avatar {
+  width: 28px; height: 28px; border-radius: 7px; flex: none;
+  background: rgba(29, 112, 245, 0.16); color: #7fb0ff;
+  display: inline-flex; align-items: center; justify-content: center;
+  font-size: 0.78rem; font-weight: 800;
+}
+.efferd-ws-item-text { flex: 1; min-width: 0; display: grid; line-height: 1.3; }
+.efferd-ws-item-name {
+  font-size: 13px; font-weight: 600; color: #f5f5f5;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.efferd-ws-item-plan { font-size: 11px; color: #999999; }
+.efferd-ws-check { color: #7fb0ff; flex: none; }
 .efferd-menu-pop-item {
   font-size: 13px; color: #e8e8e8; border-radius: 6px;
   padding: 0.5rem; cursor: pointer;
@@ -456,6 +478,13 @@
 .efferd-layout .overlay { background: rgba(0, 0, 0, 0.6); }
 .efferd-layout .modal { background: #111111; border-color: #242424; color: #f5f5f5; }
 .efferd-layout .banner { background: rgba(239, 68, 68, 0.08); border-color: rgba(239, 68, 68, 0.35); color: #fca5a5; }
+/* Loading skeletons render on every hard refresh while auth/data resolve —
+   keep them dark so no white card ever flashes inside the shell. */
+.efferd-layout .card { background: #111111; border-color: #242424; box-shadow: none; }
+.efferd-layout .skeleton { background: #1e1e1e; }
+.efferd-layout .skeleton::after {
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.08), transparent);
+}
 .efferd-layout .form-error { color: #f87171; }
 .efferd-layout .form-hint { color: #666666; }
 .efferd-layout .nav-link { color: #b8b8b8; }
@@ -516,12 +545,13 @@
    ~20px below header, KPI strip ~110px, primary chart ~355px. */
 .dash-wrap { padding: 20px 30px 24px; min-width: 0; }
 .dash-head {
-  display: flex; justify-content: space-between; align-items: flex-end;
-  gap: 1rem; flex-wrap: wrap; margin-bottom: 1.25rem;
+  display: flex; justify-content: space-between; align-items: flex-start;
+  gap: 1rem; flex-wrap: wrap;
+  min-height: 78px; padding-top: 18px; padding-bottom: 14px; margin-bottom: 4px;
 }
-.dash-title { margin: 0 0 0.15rem; font-size: 1.5rem; letter-spacing: -0.02em; color: #f5f5f5; }
-.dash-subtitle { margin: 0; font-size: 0.85rem; color: #888888; }
-.dash-controls { display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap; }
+.dash-title { margin: 0; font-size: 24px; line-height: 1.2; font-weight: 500; letter-spacing: -0.02em; color: #f5f5f5; }
+.dash-subtitle { margin: 3px 0 0; font-size: 13px; color: #888888; }
+.dash-controls { display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap; padding-top: 2px; }
 .dash-select {
   background: #242424; color: #f5f5f5; border: 1px solid #333;
   border-radius: 8px; padding: 0.4rem 0.6rem; font: inherit; font-size: 0.82rem; cursor: pointer;
@@ -632,4 +662,168 @@
 @media (prefers-reduced-motion: reduce) {
   .dash-btn-secondary { transition: none; }
   .efferd-trigger, .efferd-update-dismiss { transition: none; }
+}
+
+/* ---- Theme toggle (dashboard header only). Base = dark shell. ---- */
+.dash-theme-toggle {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 32px; height: 32px; flex: none;
+  border-radius: 8px;
+  background: #242424; border: 1px solid #333; color: #f5f5f5;
+  cursor: pointer;
+  transition: background 150ms ease;
+}
+.dash-theme-toggle:hover { background: #2e2e2e; }
+.dash-theme-toggle:disabled { opacity: 0.55; cursor: default; }
+.dash-theme-toggle:focus-visible { outline: 2px solid #1d70f5; outline-offset: 2px; }
+html:not(.dark) .dash-theme-toggle { background: #ffffff; border-color: #e2e8f0; color: #475569; }
+html:not(.dark) .dash-theme-toggle:hover { background: #f8fafc; }
+
+/* ---- Light app theme (next-themes default; dark is the base above).
+   Everything below is gated on html:not(.dark) so the Efferd dark
+   design only applies when the user picks dark. Layout and geometry
+   are untouched — only surfaces, text, and hairlines flip. ---- */
+html:not(.dark) .efferd-layout { background-color: #f8fafc; color: #0f172a; }
+html:not(.dark) .efferd-main { background-color: #ffffff; border-color: #e2e8f0; }
+html:not(.dark) .efferd-sidebar { background: #ffffff; border-right-color: #e2e8f0; }
+html:not(.dark) .efferd-brand-link { color: #0f172a; }
+html:not(.dark) .efferd-brand-link:hover { background: #f1f5f9; }
+html:not(.dark) .efferd-icon-btn,
+html:not(.dark) .efferd-trigger { color: #64748b; }
+html:not(.dark) .efferd-icon-btn:hover,
+html:not(.dark) .efferd-trigger:hover { background: #f1f5f9; color: #0f172a; }
+html:not(.dark) .efferd-ws-btn { background: #f8fafc; border-color: #e2e8f0; color: #0f172a; }
+html:not(.dark) .efferd-ws-btn:hover { border-color: #cbd5e1; }
+html:not(.dark) .efferd-ws-dot { background: #eef5ff; color: #1d70f5; }
+html:not(.dark) .efferd-menu-item { color: #475569; }
+html:not(.dark) .efferd-menu-item:hover { background: #f1f5f9; color: #0f172a; }
+html:not(.dark) .efferd-menu-item.active { background: #eef5ff; color: #1d70f5; }
+html:not(.dark) .efferd-menu-group-label { color: #94a3b8; }
+html:not(.dark) .efferd-project-dot { background: #eef5ff; color: #1d70f5; }
+html:not(.dark) .efferd-account-btn { color: #0f172a; }
+html:not(.dark) .efferd-account-btn:hover { background: #f1f5f9; }
+html:not(.dark) .efferd-avatar { background: #eef5ff; color: #1d70f5; border-color: #bfdbfe; }
+html:not(.dark) .efferd-account-name { color: #0f172a; }
+html:not(.dark) .efferd-account-email { color: #64748b; }
+html:not(.dark) .efferd-account-chevron { color: #94a3b8; }
+html:not(.dark) .efferd-update-card { background: #f8fafc; border-color: #e2e8f0; }
+html:not(.dark) .efferd-update-title { color: #0f172a; }
+html:not(.dark) .efferd-update-desc { color: #64748b; }
+html:not(.dark) .efferd-update-dismiss { color: #94a3b8; }
+html:not(.dark) .efferd-update-dismiss:hover { color: #0f172a; }
+html:not(.dark) .efferd-status-card { background: #f8fafc; border-color: #e2e8f0; }
+html:not(.dark) .efferd-status-title { color: #0f172a; }
+html:not(.dark) .efferd-status-sub { color: #64748b; }
+html:not(.dark) .efferd-help-links a { color: #64748b; }
+html:not(.dark) .efferd-help-links a:hover { color: #0f172a; }
+html:not(.dark) .efferd-rail-icon { color: #64748b; }
+html:not(.dark) .efferd-rail-icon:hover { background: #f1f5f9; color: #0f172a; }
+html:not(.dark) .efferd-eyebrow { color: #94a3b8; }
+html:not(.dark) .efferd-menu-pop { background: #ffffff; border-color: #e2e8f0; color: #0f172a; }
+html:not(.dark) .efferd-menu-pop-sep { background: #e2e8f0; }
+html:not(.dark) .efferd-menu-pop-eyebrow { color: #94a3b8; }
+html:not(.dark) .efferd-menu-pop-name { color: #0f172a; }
+html:not(.dark) .efferd-menu-pop-email { color: #64748b; }
+html:not(.dark) .efferd-ws-avatar { background: #eef5ff; color: #1d70f5; }
+html:not(.dark) .efferd-ws-item-text { color: #0f172a; }
+html:not(.dark) .efferd-ws-item-name { color: #0f172a; }
+html:not(.dark) .efferd-ws-item-plan { color: #64748b; }
+html:not(.dark) .efferd-ws-check { color: #1d70f5; }
+html:not(.dark) .efferd-ws-item.active { background: #eef5ff; }
+html:not(.dark) .efferd-ws-item.active[data-highlighted] { background: #e2e8f0; }
+html:not(.dark) .efferd-menu-pop-item { color: #334155; }
+html:not(.dark) .efferd-menu-pop-item[data-highlighted] { background: #f1f5f9; color: #0f172a; }
+html:not(.dark) .efferd-text-muted { color: #64748b; }
+html:not(.dark) .kbd-dark { background: #f1f5f9; border-color: #e2e8f0; color: #64748b; }
+html:not(.dark) .efferd-button { background: #ffffff; border-color: #e2e8f0; color: #0f172a; }
+html:not(.dark) .efferd-button:hover { background: #f8fafc; }
+html:not(.dark) .efferd-icon-wrapper { color: #64748b; }
+html:not(.dark) .efferd-badge { background: #f1f5f9; border-color: #e2e8f0; color: #475569; }
+html:not(.dark) .efferd-header { border-bottom-color: #e2e8f0; }
+html:not(.dark) .eff-section { border-top-color: #e2e8f0; }
+html:not(.dark) .eff-row { border-bottom-color: #e2e8f0; }
+html:not(.dark) .efferd-section { border-bottom-color: #e2e8f0; }
+html:not(.dark) .efferd-metric-row { border-bottom-color: #e2e8f0; }
+html:not(.dark) .efferd-metric-item { border-right-color: #e2e8f0; }
+html:not(.dark) .efferd-task-item { border-color: #e2e8f0; }
+html:not(.dark) .efferd-right-rail-section { border-bottom-color: #e2e8f0; }
+html:not(.dark) .efferd-card { border-color: #e2e8f0; }
+html:not(.dark) .efferd-progress-bg { background: #e2e8f0; }
+html:not(.dark) .efferd-layout h1, html:not(.dark) .efferd-layout h2, html:not(.dark) .efferd-layout h3 { color: #0f172a; }
+html:not(.dark) .efferd-layout .muted { color: #64748b; }
+html:not(.dark) .efferd-layout .label { color: #0f172a; }
+html:not(.dark) .efferd-layout .input, html:not(.dark) .efferd-layout .select, html:not(.dark) .efferd-layout .textarea {
+  background: #ffffff; border-color: #e2e8f0; color: #0f172a;
+}
+html:not(.dark) .efferd-layout .input:hover, html:not(.dark) .efferd-layout .select:hover, html:not(.dark) .efferd-layout .textarea:hover { border-color: #cbd5e1; }
+html:not(.dark) .efferd-layout .input::placeholder, html:not(.dark) .efferd-layout .textarea::placeholder { color: #94a3b8; }
+html:not(.dark) .efferd-layout .btn-ghost { background: #ffffff; color: #0f172a; border-color: #e2e8f0; }
+html:not(.dark) .efferd-layout .btn-ghost:hover { background: #f8fafc; border-color: #cbd5e1; color: #0f172a; }
+html:not(.dark) .efferd-layout .badge { background: #f1f5f9; border-color: #e2e8f0; color: #475569; }
+html:not(.dark) .efferd-layout .empty { border-color: #cbd5e1; background: #ffffff; }
+html:not(.dark) .efferd-layout .empty-icon { background: #f8fafc; border-color: #e2e8f0; color: #64748b; }
+html:not(.dark) .efferd-layout .column { background: #f8fafc; border-color: #e2e8f0; }
+html:not(.dark) .efferd-layout .column.over { border-color: #1d70f5; background: #eef5ff; }
+html:not(.dark) .efferd-layout .column-title { color: #0f172a; }
+html:not(.dark) .efferd-layout .count { background: #ffffff; border-color: #e2e8f0; color: #64748b; }
+html:not(.dark) .efferd-layout .task { background: #ffffff; border-color: #e2e8f0; }
+html:not(.dark) .efferd-layout .task:hover { border-color: #1d70f5; }
+html:not(.dark) .efferd-layout .task-title { color: #0f172a; }
+html:not(.dark) .efferd-layout .avatar { background: #eef5ff; border-color: #bfdbfe; color: #1d70f5; }
+html:not(.dark) .efferd-layout .activity-item { border-color: #e2e8f0; }
+html:not(.dark) .efferd-layout .comment { border-color: #e2e8f0; background: #f8fafc; }
+html:not(.dark) .efferd-layout .modal { background: #ffffff; border-color: #e2e8f0; color: #0f172a; }
+html:not(.dark) .efferd-layout .card { background: #ffffff; border-color: #e2e8f0; }
+html:not(.dark) .efferd-layout .skeleton { background: #eef2f7; }
+html:not(.dark) .efferd-layout .skeleton::after {
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.7), transparent);
+}
+html:not(.dark) .efferd-layout .form-error { color: #dc2626; }
+html:not(.dark) .efferd-layout .form-hint { color: #64748b; }
+html:not(.dark) .efferd-layout .nav-link { color: #64748b; }
+html:not(.dark) .efferd-layout .nav-link:hover { color: #0f172a; }
+html:not(.dark) .efferd-layout hr.divider { border-color: #e2e8f0; }
+html:not(.dark) .efferd-layout .pagination { color: #64748b; }
+html:not(.dark) .dash-title { color: #0f172a; }
+html:not(.dark) .dash-subtitle { color: #64748b; }
+html:not(.dark) .dash-select { background: #ffffff; color: #0f172a; border-color: #e2e8f0; }
+html:not(.dark) .dash-segment { background: #f1f5f9; border-color: #e2e8f0; }
+html:not(.dark) .dash-segment-btn { color: #64748b; }
+html:not(.dark) .dash-segment-btn.active { background: #1d70f5; color: #fff; }
+html:not(.dark) .dash-date { color: #64748b; }
+html:not(.dark) .dash-btn-secondary { background: #ffffff; color: #0f172a; border-color: #e2e8f0; }
+html:not(.dark) .dash-btn-secondary:hover { background: #f8fafc; }
+html:not(.dark) .dash-panel { border-bottom-color: #e2e8f0; }
+html:not(.dark) .dash-split { border-bottom-color: #e2e8f0; }
+html:not(.dark) .dash-panel-title { color: #0f172a; }
+html:not(.dark) .dash-panel-sub { color: #64748b; }
+html:not(.dark) .dash-muted { color: #64748b; }
+html:not(.dark) .dash-kpi { border-right-color: #e2e8f0; }
+html:not(.dark) .dash-kpi-label { color: #64748b; }
+html:not(.dark) .dash-kpi-value { color: #0f172a; }
+html:not(.dark) .dash-kpi-sub { color: #64748b; }
+html:not(.dark) .dash-chart-empty { border-color: #cbd5e1; }
+html:not(.dark) .dash-chart-empty-title { color: #0f172a; }
+html:not(.dark) .dash-chart-empty-sub { color: #64748b; }
+html:not(.dark) .dash-highlights li { color: #334155; }
+html:not(.dark) .dash-workload-label { color: #64748b; }
+html:not(.dark) .dash-workload-track { background: #e2e8f0; }
+html:not(.dark) .dash-workload-value { color: #0f172a; }
+html:not(.dark) .dash-project-row { border-bottom-color: #e2e8f0; }
+html:not(.dark) .dash-rail-big { color: #0f172a; }
+html:not(.dark) .dash-sharebar { background: #e2e8f0; }
+html:not(.dark) .dash-legend li { color: #475569; }
+html:not(.dark) .dash-status-rows li { border-bottom-color: #e2e8f0; color: #475569; }
+html:not(.dark) .dash-status-rows strong { color: #0f172a; }
+/* SVG presentation attributes lose to CSS, so charts follow the theme. */
+html:not(.dark) .dash-chart-frame line[stroke="#242424"] { stroke: #e2e8f0; }
+html:not(.dark) .dash-chart-frame text[fill="#888888"] { fill: #64748b; }
+html:not(.dark) .dash-radial circle[stroke="#242424"] { stroke: #e2e8f0; }
+html:not(.dark) .dash-radial text[fill="#f5f5f5"] { fill: #0f172a; }
+html:not(.dark) .dash-radial text[fill="#888888"] { fill: #64748b; }
+@media (max-width: 1023px) {
+  html:not(.dark) .efferd-sidebar { border-bottom-color: #e2e8f0; }
+}
+@media (max-width: 768px) {
+  html:not(.dark) .dash-kpi { border-bottom-color: #e2e8f0; }
 }

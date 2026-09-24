@@ -1,0 +1,349 @@
+/* TaskFlow auth shell — dark split-screen (Efferd-style reference).
+   Scoped to .auth-page ONLY. Dashboard / sidebar / landing untouched.
+   Colors: page #111111 · panel #1b1b1b · fg #f5f5f5 · muted #999999 ·
+   border #303030 · input #151515 · primary TaskFlow blue #1d70f5. */
+
+.auth-page {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  min-height: 100vh;
+  min-height: 100dvh;
+  background: #111111;
+  color: #f5f5f5;
+  font-family: "Plus Jakarta Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+}
+
+/* Left branding panel — full-height cloud&water.jpg with dark overlay.
+   Image is texture only; right-side form stays clean dark #111111. */
+.auth-brand-panel {
+  position: relative;
+  overflow: hidden;
+  background-color: #1b1b1b;
+  background-image: url("/cloud&water.jpg");
+  background-size: cover;
+  background-position: center center;
+  background-repeat: no-repeat;
+  border-right: 1px solid #242424;
+  min-height: 100vh;
+  min-height: 100dvh;
+}
+
+.auth-brand-overlay {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    to bottom,
+    rgba(17, 17, 17, 0.45),
+    rgba(17, 17, 17, 0.25) 45%,
+    rgba(17, 17, 17, 0.8)
+  );
+  pointer-events: none;
+}
+
+.auth-brand-content {
+  position: relative;
+  z-index: 1;
+  padding: 32px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  min-height: 100vh;
+  min-height: 100dvh;
+}
+
+.auth-brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.6rem;
+  color: #f5f5f5;
+  font-weight: 800;
+  font-size: 1.05rem;
+  letter-spacing: -0.02em;
+  text-decoration: none;
+}
+
+.auth-brand:hover {
+  color: #ffffff;
+}
+
+.auth-brand-logo {
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  display: block;
+}
+
+.auth-brand-name {
+  line-height: 1;
+}
+
+.auth-brand-spacer {
+  flex: 1;
+}
+
+.auth-brand-quote {
+  max-width: 32rem;
+}
+
+.auth-brand-headline {
+  margin: 0 0 0.5rem 0;
+  font-size: 1.5rem;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  line-height: 1.25;
+  color: #f5f5f5;
+  text-shadow: 0 1px 12px rgba(0, 0, 0, 0.55);
+}
+
+.auth-brand-sub {
+  margin: 0;
+  font-size: 0.95rem;
+  line-height: 1.6;
+  color: #d6d6d6;
+  max-width: 42ch;
+  text-shadow: 0 1px 8px rgba(0, 0, 0, 0.55);
+}
+
+/* Right form panel — form sits directly on #111111, no white card */
+.auth-form-panel {
+  background: #111111;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 32px;
+  min-width: 0;
+}
+
+.auth-form-inner {
+  width: 100%;
+  max-width: 360px;
+}
+
+.auth-title {
+  margin: 0 0 0.35rem 0;
+  font-size: 1.6rem;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  color: #f5f5f5;
+}
+
+.auth-subtitle {
+  margin: 0 0 1.5rem 0;
+  font-size: 0.92rem;
+  color: #999999;
+}
+
+/* Form elements — dark only inside .auth-page */
+.auth-page .field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  margin-bottom: 0.9rem;
+}
+
+.auth-page .label {
+  font-weight: 600;
+  font-size: 0.85rem;
+  color: #f5f5f5;
+}
+
+.auth-page .input {
+  font: inherit;
+  height: 44px;
+  border: 1px solid #303030;
+  border-radius: 8px;
+  padding: 0 0.85rem;
+  background: #151515;
+  color: #f5f5f5;
+  width: 100%;
+  transition: border-color 150ms ease, box-shadow 150ms ease;
+}
+
+.auth-page .input:hover {
+  border-color: #3d3d3d;
+}
+
+.auth-page .input:focus {
+  outline: none;
+  border-color: #1d70f5;
+  box-shadow: 0 0 0 3px rgba(29, 112, 245, 0.35);
+}
+
+.auth-page .input::placeholder {
+  color: #666666;
+}
+
+.auth-page .form-error {
+  color: #f87171;
+  font-size: 0.82rem;
+  font-weight: 600;
+}
+
+.auth-page .form-hint {
+  color: #666666;
+  font-size: 0.8rem;
+}
+
+/* Primary + GitHub buttons */
+.auth-page .btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  font-weight: 700;
+  font-size: 0.92rem;
+  border-radius: 8px;
+  border: 1px solid transparent;
+  height: 44px;
+  padding: 0 1.25rem;
+  cursor: pointer;
+  width: 100%;
+  transition: background 150ms ease, border-color 150ms ease, opacity 150ms ease, transform 150ms ease;
+}
+
+.auth-page .btn:active {
+  transform: scale(0.99);
+}
+
+.auth-page .btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.auth-page .btn-primary,
+.auth-page .btn-accent {
+  background: #1d70f5;
+  color: #fff;
+}
+
+.auth-page .btn-primary:hover,
+.auth-page .btn-accent:hover {
+  background: #155ecc;
+  color: #fff;
+}
+
+.auth-btn-github {
+  background: #1e1e1e;
+  color: #f5f5f5;
+  border: 1px solid #303030;
+}
+
+.auth-btn-github:hover:not(:disabled) {
+  background: #262626;
+  border-color: #3d3d3d;
+}
+
+/* Divider "Or continue with" */
+.auth-divider {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin: 1.25rem 0;
+  color: #666666;
+  font-size: 0.78rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.auth-divider::before,
+.auth-divider::after {
+  content: "";
+  flex: 1;
+  height: 1px;
+  background: #303030;
+}
+
+/* Footer link row */
+.auth-footer {
+  margin-top: 1.25rem;
+  font-size: 0.88rem;
+  color: #999999;
+  text-align: center;
+}
+
+.auth-footer a {
+  color: #7fb0ff;
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.auth-footer a:hover {
+  color: #a8c7ff;
+  text-decoration: underline;
+}
+
+/* Error banner — dark variant scoped to auth only */
+.auth-page .banner {
+  border: 1px solid rgba(239, 68, 68, 0.35);
+  background: rgba(239, 68, 68, 0.08);
+  color: #fca5a5;
+  border-radius: 8px;
+  padding: 0.7rem 0.85rem;
+  font-weight: 600;
+  font-size: 0.88rem;
+  margin-bottom: 1rem;
+}
+
+.auth-page .banner .btn-ghost {
+  background: transparent;
+  color: #fca5a5;
+  border-color: rgba(239, 68, 68, 0.35);
+  height: auto;
+  width: auto;
+  padding: 0.25rem 0.6rem;
+  font-size: 0.78rem;
+  border-radius: 6px;
+}
+
+/* Light auth (next-themes forcedTheme="light" on /login + /signup).
+   Dark is the base above; these overrides fire when html is not .dark
+   so auth stays white even after the dashboard is switched to dark.
+   The image panel keeps its dark overlay for readability. */
+html:not(.dark) .auth-page { background: #ffffff; color: #0f172a; }
+html:not(.dark) .auth-brand-panel { border-right-color: #e2e8f0; }
+html:not(.dark) .auth-form-panel { background: #ffffff; }
+html:not(.dark) .auth-title { color: #0f172a; }
+html:not(.dark) .auth-subtitle { color: #64748b; }
+html:not(.dark) .auth-page .label { color: #0f172a; }
+html:not(.dark) .auth-page .input { background: #ffffff; border-color: #e2e8f0; color: #0f172a; }
+html:not(.dark) .auth-page .input:hover { border-color: #cbd5e1; }
+html:not(.dark) .auth-page .input::placeholder { color: #94a3b8; }
+html:not(.dark) .auth-page .form-error { color: #dc2626; }
+html:not(.dark) .auth-page .form-hint { color: #64748b; }
+html:not(.dark) .auth-btn-github { background: #ffffff; color: #0f172a; border-color: #e2e8f0; }
+html:not(.dark) .auth-btn-github:hover:not(:disabled) { background: #f8fafc; border-color: #cbd5e1; }
+html:not(.dark) .auth-divider { color: #94a3b8; }
+html:not(.dark) .auth-divider::before,
+html:not(.dark) .auth-divider::after { background: #e2e8f0; }
+html:not(.dark) .auth-footer { color: #64748b; }
+html:not(.dark) .auth-footer a { color: #1d70f5; }
+html:not(.dark) .auth-footer a:hover { color: #155ecc; }
+html:not(.dark) .auth-page .banner { border-color: #fecaca; background: #fef2f2; color: #dc2626; }
+html:not(.dark) .auth-page .banner .btn-ghost { color: #dc2626; border-color: #fecaca; }
+
+/* Narrow screens */
+@media (max-width: 1024px) and (min-width: 641px) {
+  .auth-page {
+    grid-template-columns: 40% 60%;
+  }
+}
+
+@media (max-width: 640px) {
+  .auth-page {
+    grid-template-columns: 1fr;
+  }
+  .auth-brand-panel {
+    display: none;
+  }
+  .auth-form-panel {
+    padding: 24px 20px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .auth-page .btn,
+  .auth-page .input {
+    transition: none;
+  }
+}

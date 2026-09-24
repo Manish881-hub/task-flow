@@ -25,9 +25,11 @@ function AssignedInner() {
   const [filter, setFilter] = useState("all");
   const [projectFilter, setProjectFilter] = useState("all");
 
-  const load = useCallback(async () => {
-    setState("loading");
-    setError("");
+  const load = useCallback(async (silent = false) => {
+    if (!silent) {
+      setState("loading");
+      setError("");
+    }
     try {
       const [taskData, projData] = await Promise.all([
         apiGet("/api/v1/assigned?per_page=100"),
@@ -40,7 +42,7 @@ function AssignedInner() {
       setState("done");
     } catch (err) {
       setError(getErrorMessage(err));
-      setState("error");
+      if (!silent) setState("error");
     }
   }, []);
 
@@ -50,7 +52,7 @@ function AssignedInner() {
 
   useEffect(() => {
     if (lastEvent && (lastEvent.type === "assigned_task_updated" || lastEvent.type?.includes("task"))) {
-      load();
+      load(true);
     }
   }, [lastEvent?._receivedAt]); // eslint-disable-line react-hooks/exhaustive-deps
 

@@ -31,10 +31,7 @@ export default function Home() {
         <meta name="viewport" content="width=device-width, initial-scale=1" />
       </Head>
 
-      {/* Navigation */}
-      <LandingNavbar />
-
-      {/* Main Content Sections */}
+      {/* Hero now owns its transparent nav + floating preview */}
       <main id="main-content">
         <HeroSection />
         <FeaturesSection />

@@ -1,255 +1,187 @@
 import Link from "next/link";
+import { useState, useRef, useEffect } from "react";
 import { useAuth } from "../../lib/auth";
+import DashboardPreview from "./DashboardPreview";
+
+const TASKFLOW_CALENDLY_URL = "https://calendly.com/manishbhakti881/30min";
+
+const PRODUCT_ITEMS = [
+  { label: "Task Boards", desc: "Organize projects with drag-and-drop boards", href: "#features" },
+  { label: "Real-time Sync", desc: "See updates as your team works", href: "#features" },
+  { label: "Teams & Roles", desc: "Manage members and access", href: "#features" },
+  { label: "Workflows", desc: "Customize how work moves", href: "#features" },
+];
 
 export default function HeroSection() {
   const { isAuthed } = useAuth();
+  const [mobileOpen, setMobileOpen] = useState(false);
+  const [productOpen, setProductOpen] = useState(false);
+  const productRef = useRef(null);
+
+  useEffect(() => {
+    const onClick = (e) => {
+      if (productRef.current && !productRef.current.contains(e.target)) setProductOpen(false);
+    };
+    document.addEventListener("mousedown", onClick);
+    return () => document.removeEventListener("mousedown", onClick);
+  }, []);
 
   return (
-    <section className="tuf-hero">
-      <div className="tuf-container">
-        <div className="tuf-hero-grid">
-          {/* Hero Left Content */}
-          <div>
-            <Link href="#features" className="tuf-badge-pill">
-              <span className="tuf-badge-tag">NEW</span>
-              <span>Live boards update as your team works</span>
-              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M9 18l6-6-6-6" />
-              </svg>
-            </Link>
+    <>
+      {/* Floating sticky glass navbar — light version for bright hero */}
+      <header className="tuf-glass-sticky-wrap">
+        <div className="tuf-glass-nav">
+          <Link href="/" className="tuf-hero-logo tuf-glass-logo" aria-label="TaskFlow home">
+            <img src="/logo.png" alt="TaskFlow" width={28} height={28} className="tuf-hero-logo-img" />
+            <span>TaskFlow</span>
+          </Link>
 
-            <h1 className="tuf-hero-title">
-              Boards that keep
-              <br />
-              every team in sync
-            </h1>
-
-            <p className="tuf-hero-subtitle">
-              Create projects, assign tasks, and watch boards update live as your
-              team ships — no refresh, no status meetings, no lost work.
-            </p>
-
-            <div className="tuf-hero-ctas">
-              <Link href={isAuthed ? "/dashboard" : "/signup"} className="tuf-btn-primary tuf-btn-primary-lg">
-                Start for free
-                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M9 18l6-6-6-6" />
+          <nav className="tuf-glass-center" aria-label="Primary">
+            <div className="tuf-product-wrap" ref={productRef}>
+              <button
+                type="button"
+                aria-expanded={productOpen}
+                aria-haspopup="true"
+                className={`tuf-glass-link tuf-glass-product ${productOpen ? "is-open" : ""}`}
+                onClick={() => setProductOpen((v) => !v)}
+                onMouseEnter={() => setProductOpen(true)}
+              >
+                Product
+                <svg
+                  width="12"
+                  height="12"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  className={`tuf-plus-icon ${productOpen ? "is-open" : ""}`}
+                  aria-hidden="true"
+                >
+                  <path d="M12 5v14M5 12h14" />
                 </svg>
+              </button>
+              {productOpen ? (
+                <div
+                  className="tuf-product-dropdown"
+                  onMouseLeave={() => setProductOpen(false)}
+                >
+                  <div className="tuf-product-dropdown-label">PRODUCT</div>
+                  {PRODUCT_ITEMS.map((it) => (
+                    <Link key={it.label} href={it.href} className="tuf-product-item" onClick={() => setProductOpen(false)}>
+                      <span className="tuf-product-item-title">{it.label}</span>
+                      <span className="tuf-product-item-desc">{it.desc}</span>
+                    </Link>
+                  ))}
+                </div>
+              ) : null}
+            </div>
+            <Link href="#features" className="tuf-glass-link">Resources</Link>
+            <a href="#pricing" className="tuf-glass-link">Pricing</a>
+          </nav>
+
+          <div className="tuf-glass-actions">
+            {isAuthed ? (
+              <Link href="/dashboard" className="tuf-btn-primary tuf-hero-cta">
+                Go to Dashboard
               </Link>
-              <Link href="#features" className="tuf-btn-secondary-lg">
-                See features
-              </Link>
-            </div>
-
-            <div className="tuf-trusted-by">
-              <span className="tuf-trusted-label">Powered By</span>
-              <div className="tuf-trusted-logos">
-                {/* Next.js */}
-                <div className="tuf-partner-logo">
-                  <svg viewBox="0 0 24 24" width="22" height="22" fill="currentColor">
-                    <circle cx="12" cy="12" r="9" stroke="currentColor" strokeWidth="2" fill="none" />
-                    <path d="M8 8l8 8M16 8l-8 8" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
-                  </svg>
-                  <span>NEXT.JS</span>
-                </div>
-
-                {/* FastAPI */}
-                <div className="tuf-partner-logo">
-                  <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor">
-                    <path d="M13 2 3 14h7l-1 8 10-12h-7l1-8z" />
-                  </svg>
-                  <span>FASTAPI</span>
-                </div>
-
-                {/* PostgreSQL */}
-                <div className="tuf-partner-logo">
-                  <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor">
-                    <ellipse cx="12" cy="6" rx="7" ry="3" stroke="currentColor" strokeWidth="2" fill="none" />
-                    <path d="M5 6v12c0 1.7 3.1 3 7 3s7-1.3 7-3V6" stroke="currentColor" strokeWidth="2" fill="none" />
-                  </svg>
-                  <span>POSTGRESQL</span>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Hero Right: Dashboard Mockup */}
-          <div className="tuf-hero-graphic-wrap">
-            <div className="tuf-app-mockup">
-              {/* Mini Sidebar */}
-              <div className="tuf-mock-sidebar">
-                <div className="tuf-mock-brand">
-                  <span className="tuf-mock-brand-dot" />
-                  <span>TaskFlow</span>
-                </div>
-
-                <div className="tuf-mock-nav-group">
-                  <span className="tuf-mock-nav-label">Workspace</span>
-                  <div className="tuf-mock-nav-item">
-                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                      <rect x="3" y="3" width="7" height="7" />
-                      <rect x="14" y="3" width="7" height="7" />
-                      <rect x="14" y="14" width="7" height="7" />
-                      <rect x="3" y="14" width="7" height="7" />
-                    </svg>
-                    Boards
-                  </div>
-                  <div className="tuf-mock-nav-item">
-                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                      <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
-                      <circle cx="12" cy="7" r="4" />
-                    </svg>
-                    Assigned
-                  </div>
-                  <div className="tuf-mock-nav-item">
-                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                      <polyline points="22 12 18 12 15 21 9 3 6 12 2 12" />
-                    </svg>
-                    Activity
-                  </div>
-                  <div className="tuf-mock-nav-item">
-                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                      <circle cx="12" cy="12" r="10" />
-                      <polyline points="12 6 12 12 14 14" />
-                    </svg>
-                    In Progress
-                  </div>
-                </div>
-
-                <div className="tuf-mock-nav-group">
-                  <span className="tuf-mock-nav-label">Insights</span>
-                  <div className="tuf-mock-nav-item active">
-                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                      <line x1="18" y1="20" x2="18" y2="10" />
-                      <line x1="12" y1="20" x2="12" y2="4" />
-                      <line x1="6" y1="20" x2="6" y2="14" />
-                    </svg>
-                    Trends
-                  </div>
-                  <div className="tuf-mock-nav-item">
-                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                      <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" />
-                    </svg>
-                    Velocity
-                  </div>
-                  <div className="tuf-mock-nav-item">
-                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                      <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
-                      <polyline points="14 2 14 8 20 8" />
-                    </svg>
-                    Reports
-                  </div>
-                </div>
-              </div>
-
-              {/* Mock Content */}
-              <div className="tuf-mock-content">
-                <div className="tuf-mock-topbar">
-                  <div className="tuf-mock-title-area">
-                    <h4>Trends</h4>
-                    <span>How your key metrics have moved over time</span>
-                  </div>
-                  <div className="tuf-mock-search">
-                    <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                      <circle cx="11" cy="11" r="8" />
-                      <line x1="21" y1="21" x2="16.65" y2="16.65" />
-                    </svg>
-                    <span>Search...</span>
-                  </div>
-                </div>
-
-                {/* 3 Metric Cards */}
-                <div className="tuf-mock-metrics-row">
-                  <div className="tuf-mock-metric-card">
-                    <div className="tuf-mock-metric-header">
-                      <span className="tuf-mock-metric-label">Tasks Done</span>
-                      <span style={{ fontSize: "0.6rem", color: "#94a3b8" }}>This sprint</span>
-                    </div>
-                    <div className="tuf-mock-metric-val">48</div>
-                    <div className="tuf-mock-metric-delta">
-                      <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3">
-                        <polyline points="18 15 12 9 6 15" />
-                      </svg>
-                      +18% from prev period
-                    </div>
-                  </div>
-
-                  <div className="tuf-mock-metric-card">
-                    <div className="tuf-mock-metric-header">
-                      <span className="tuf-mock-metric-label">In Progress</span>
-                      <span style={{ fontSize: "0.6rem", color: "#94a3b8" }}>Across boards</span>
-                    </div>
-                    <div className="tuf-mock-metric-val">12</div>
-                    <div className="tuf-mock-metric-delta">
-                      <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3">
-                        <polyline points="18 15 12 9 6 15" />
-                      </svg>
-                      +4 from last week
-                    </div>
-                  </div>
-
-                  <div className="tuf-mock-metric-card">
-                    <div className="tuf-mock-metric-header">
-                      <span className="tuf-mock-metric-label">Overdue</span>
-                      <span style={{ fontSize: "0.6rem", color: "#94a3b8" }}>Needs attention</span>
-                    </div>
-                    <div className="tuf-mock-metric-val">3</div>
-                    <div className="tuf-mock-metric-delta" style={{ color: "#f59e0b" }}>
-                      <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3">
-                        <polyline points="6 9 12 15 18 9" />
-                      </svg>
-                      -2 from last week
-                    </div>
-                  </div>
-                </div>
-
-                {/* Line Chart Card */}
-                <div className="tuf-mock-chart-card">
-                  <div className="tuf-mock-chart-title">
-                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#E87F24" strokeWidth="2.5">
-                      <circle cx="12" cy="12" r="10" />
-                      <polyline points="12 6 12 12 14 14" />
-                    </svg>
-                    <span>Throughput over time</span>
-                  </div>
-                  <div className="tuf-mock-chart-desc">Completed vs created tasks for the last 30 days</div>
-
-                  <svg className="tuf-mock-svg-chart" viewBox="0 0 360 110" preserveAspectRatio="none">
-                    <defs>
-                      <linearGradient id="tufChartGrad" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="0%" stopColor="#E87F24" stopOpacity="0.25" />
-                        <stop offset="100%" stopColor="#E87F24" stopOpacity="0.0" />
-                      </linearGradient>
-                    </defs>
-                    <path
-                      d="M0,80 C30,75 50,45 80,50 C110,55 130,25 160,35 C190,45 220,15 250,22 C280,30 310,12 360,18 L360,110 L0,110 Z"
-                      fill="url(#tufChartGrad)"
-                    />
-                    <path
-                      d="M0,80 C30,75 50,45 80,50 C110,55 130,25 160,35 C190,45 220,15 250,22 C280,30 310,12 360,18"
-                      fill="none"
-                      stroke="#E87F24"
-                      strokeWidth="2.5"
-                    />
-                    {/* Points on curve */}
-                    <circle cx="80" cy="50" r="3.5" fill="#ffffff" stroke="#E87F24" strokeWidth="2" />
-                    <circle cx="160" cy="35" r="3.5" fill="#ffffff" stroke="#E87F24" strokeWidth="2" />
-                    <circle cx="250" cy="22" r="3.5" fill="#ffffff" stroke="#E87F24" strokeWidth="2" />
-                    <circle cx="360" cy="18" r="3.5" fill="#ffffff" stroke="#E87F24" strokeWidth="2" />
-                  </svg>
-
-                  <div className="tuf-mock-chart-axes">
-                    <span>Mar 16</span>
-                    <span>Mar 23</span>
-                    <span>Mar 30</span>
-                    <span>Apr 6</span>
-                  </div>
-                </div>
-              </div>
-            </div>
+            ) : (
+              <>
+                <Link href="/login" className="tuf-glass-link tuf-glass-link-muted">Log in</Link>
+                <a
+                  href={TASKFLOW_CALENDLY_URL}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="tuf-glass-link tuf-glass-demo"
+                >
+                  Book a demo
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true"><path d="M5 12h14M12 5l7 7-7 7" /></svg>
+                </a>
+                <Link href="/signup" className="tuf-btn-primary tuf-hero-cta">
+                  Get started
+                </Link>
+              </>
+            )}
+            <button
+              type="button"
+              className="tuf-glass-menu-btn"
+              aria-label={mobileOpen ? "Close menu" : "Open menu"}
+              aria-expanded={mobileOpen}
+              onClick={() => setMobileOpen((v) => !v)}
+            >
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+                {mobileOpen ? <path d="M6 18L18 6M6 6l12 12" /> : <path d="M4 6h16M4 12h16M4 18h16" />}
+              </svg>
+            </button>
           </div>
         </div>
-      </div>
-    </section>
+
+        {/* Mobile overlay — floating rounded glass, not full-screen dark */}
+        {mobileOpen ? (
+          <div className="tuf-glass-mobile-overlay" role="dialog" aria-modal="true">
+            <div className="tuf-glass-mobile-backdrop" onClick={() => setMobileOpen(false)} aria-hidden="true" />
+            <div className="tuf-glass-mobile-panel">
+              <div className="tuf-glass-mobile-head">
+                <Link href="/" className="tuf-hero-logo" aria-label="TaskFlow home" onClick={() => setMobileOpen(false)}>
+                  <img src="/logo.png" alt="TaskFlow" width={28} height={28} className="tuf-hero-logo-img" />
+                  <span>TaskFlow</span>
+                </Link>
+                <button type="button" aria-label="Close menu" className="tuf-glass-mobile-close" onClick={() => setMobileOpen(false)}>
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M6 18L18 6M6 6l12 12" /></svg>
+                </button>
+              </div>
+              <div className="tuf-glass-mobile-body">
+                <div className="tuf-glass-mobile-label">Product</div>
+                {PRODUCT_ITEMS.map((it) => (
+                  <Link key={it.label} href={it.href} className="tuf-glass-mobile-link" onClick={() => setMobileOpen(false)}>
+                    <span className="tuf-glass-mobile-link-title">{it.label}</span>
+                    <span className="tuf-glass-mobile-link-desc">{it.desc}</span>
+                  </Link>
+                ))}
+                <div className="tuf-glass-mobile-sep" />
+                <Link href="#features" className="tuf-glass-mobile-link" onClick={() => setMobileOpen(false)}>Resources</Link>
+                <a href="#pricing" className="tuf-glass-mobile-link" onClick={() => setMobileOpen(false)}>Pricing</a>
+              </div>
+              {!isAuthed ? (
+                <div className="tuf-glass-mobile-ctas">
+                  <Link href="/login" className="tuf-btn-secondary-lg" onClick={() => setMobileOpen(false)}>Log in</Link>
+                  <a href={TASKFLOW_CALENDLY_URL} target="_blank" rel="noopener noreferrer" className="tuf-btn-secondary-lg" onClick={() => setMobileOpen(false)}>
+                    Book a demo →
+                  </a>
+                  <Link href="/signup" className="tuf-btn-primary" onClick={() => setMobileOpen(false)}>Get started</Link>
+                </div>
+              ) : null}
+            </div>
+          </div>
+        ) : null}
+      </header>
+
+      <section className="tuf-hero">
+        <div className="tuf-hero-background" aria-hidden="true" />
+
+        <div className="hero-content tuf-hero-content tuf-container">
+          <div className="tuf-hero-badge">
+            <span className="tuf-hero-badge-dot" />
+            Live boards update as your team works
+          </div>
+          <h1 className="tuf-hero-new-title">
+            manage your work
+            <br />
+            without the busywork.
+          </h1>
+          <p className="tuf-hero-new-sub">plan tasks. collaborate. ship faster.</p>
+          <div className="tuf-hero-new-ctas">
+            <Link href={isAuthed ? "/dashboard" : "/signup"} className="tuf-btn-primary tuf-btn-primary-lg">
+              Get started
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M9 18l6-6-6-6" /></svg>
+            </Link>
+            <Link href="#features" className="tuf-btn-secondary-lg tuf-hero-secondary">
+              View demo
+            </Link>
+          </div>
+        </div>
+
+        <DashboardPreview />
+      </section>
+    </>
   );
 }

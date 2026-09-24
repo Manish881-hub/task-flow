@@ -202,7 +202,492 @@
 }
 
 /* ==========================================================================
-   Hero Section
+   Hero FIX — single background layer, fixed stage, absolute preview
+   Addresses duplicate landscape bug: exactly ONE hero.png inside hero only,
+   preview anchored absolutely so hero height is not determined by preview.
+   ========================================================================== */
+
+/* hero shell — fixed visual stage, isolation prevents background bleeding
+   z-index ensures floating preview stays above white section */
+.tuf-hero {
+  position: relative;
+  isolation: isolate;
+  z-index: 2;
+  height: 780px;
+  min-height: 780px;
+  background: transparent;
+  overflow: visible;
+}
+
+/* single hero background layer — ONLY place hero.png is used */
+.tuf-hero-background {
+  position: absolute;
+  inset: 0;
+  z-index: -2;
+  background-image: url("/hero.png");
+  background-size: cover;
+  background-position: center center;
+  background-repeat: no-repeat;
+}
+
+/* very light overlay — do NOT darken the bright landscape */
+.tuf-hero-background::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    to bottom,
+    rgba(255,255,255,0.02),
+    rgba(255,255,255,0.03) 45%,
+    rgba(255,255,255,0.12) 100%
+  );
+  pointer-events: none;
+  z-index: 1;
+}
+
+/* legacy hooks — ensure no duplicate hero.png anywhere else */
+.tuf-hero-new,
+.hero,
+.tuf-hero-bg,
+.hero::before,
+.hero-overlay,
+.tuf-hero-overlay {
+  background: transparent;
+  background-image: none;
+}
+.tuf-hero-new { background: transparent; }
+
+/* explicit reset for any stray hero.png on wrappers/body — hero.png must ONLY be on .tuf-hero-background */
+.tuf-landing,
+.tuf-hero-preview-wrap,
+.dashboard-preview-wrap,
+.tuf-features-section,
+.features-section {
+  background-image: none;
+}
+
+/* ==========================================================================
+   Glass Navbar — floating FIXED pill (light glass for bright hero)
+   Fixed so it stays visible while scrolling entire page (hero → features → pricing → footer).
+   Previously sticky inside hero disappeared when hero scrolled out.
+   ========================================================================== */
+.tuf-glass-sticky-wrap {
+  position: fixed;
+  top: 12px;
+  left: 0;
+  right: 0;
+  z-index: 100;
+  padding: 0 16px;
+  pointer-events: none;
+}
+.tuf-glass-nav {
+  pointer-events: auto;
+  max-width: 1120px;
+  height: 52px;
+  margin: 0 auto;
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+  padding: 0 10px;
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.72);
+  border: 1px solid rgba(255, 255, 255, 0.5);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  box-shadow: 0 8px 30px rgba(20, 30, 50, 0.08);
+}
+.tuf-glass-logo { justify-self: start; }
+.tuf-glass-center {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.25rem;
+  justify-self: center;
+}
+.tuf-glass-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  font-size: 0.88rem;
+  font-weight: 500;
+  color: #142033;
+  text-decoration: none;
+  padding: 0.35rem 0.7rem;
+  border-radius: 9999px;
+  transition: background 150ms ease, color 150ms ease;
+}
+.tuf-glass-link:hover { background: rgba(20, 30, 50, 0.06); color: #0f172a; }
+.tuf-glass-link-muted { color: #475569; }
+.tuf-glass-link-muted:hover { color: #0f172a; }
+.tuf-glass-demo {
+  gap: 0.35rem;
+  font-weight: 600;
+  color: #142033;
+}
+.tuf-glass-actions {
+  justify-self: end;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.tuf-product-wrap { position: relative; }
+.tuf-glass-product { gap: 0.35rem; }
+.tuf-plus-icon { transition: transform 200ms ease; }
+.tuf-plus-icon.is-open { transform: rotate(45deg); }
+.tuf-product-dropdown {
+  position: absolute;
+  top: calc(100% + 12px);
+  left: 0;
+  width: 340px;
+  background: rgba(255, 255, 255, 0.96);
+  border: 1px solid rgba(20, 30, 50, 0.08);
+  border-radius: 16px;
+  box-shadow: 0 12px 40px rgba(20, 30, 50, 0.12), 0 4px 12px rgba(20, 30, 50, 0.06);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  padding: 8px;
+  z-index: 50;
+}
+.tuf-product-dropdown-label {
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  color: #94a3b8;
+  padding: 6px 10px 4px;
+}
+.tuf-product-item {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  padding: 10px 10px;
+  border-radius: 12px;
+  text-decoration: none;
+  transition: background 150ms ease;
+}
+.tuf-product-item:hover { background: rgba(20, 30, 50, 0.06); }
+.tuf-product-item-title { font-size: 0.88rem; font-weight: 600; color: #0f172a; line-height: 1.2; }
+.tuf-product-item-desc { font-size: 0.76rem; color: #64748b; line-height: 1.3; }
+.tuf-glass-menu-btn {
+  display: none;
+  width: 36px;
+  height: 36px;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255, 255, 255, 0.9);
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  cursor: pointer;
+  color: #0f172a;
+}
+.tuf-glass-mobile-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  display: grid;
+  place-items: start center;
+  padding: 12px;
+}
+.tuf-glass-mobile-backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.4);
+  backdrop-filter: blur(6px);
+}
+.tuf-glass-mobile-panel {
+  position: relative;
+  width: min(420px, 96vw);
+  max-height: 90vh;
+  overflow: auto;
+  background: rgba(255, 255, 255, 0.98);
+  border: 1px solid rgba(20, 30, 50, 0.08);
+  border-radius: 24px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.2);
+  backdrop-filter: blur(20px);
+  padding: 18px;
+}
+.tuf-glass-mobile-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.tuf-glass-mobile-close {
+  width: 36px;
+  height: 36px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 9999px;
+  background: #f1f5f9;
+  border: 1px solid #e2e8f0;
+  cursor: pointer;
+  color: #0f172a;
+}
+.tuf-glass-mobile-body { margin-top: 16px; display: grid; gap: 2px; }
+.tuf-glass-mobile-label { font-size: 0.72rem; font-weight: 700; letter-spacing: 0.08em; color: #94a3b8; padding: 8px 8px 4px; }
+.tuf-glass-mobile-link { display: flex; flex-direction: column; gap: 0.15rem; padding: 10px 8px; border-radius: 12px; text-decoration: none; }
+.tuf-glass-mobile-link:hover { background: #f8fafc; }
+.tuf-glass-mobile-link-title { font-size: 0.92rem; font-weight: 600; color: #0f172a; }
+.tuf-glass-mobile-link-desc { font-size: 0.78rem; color: #64748b; }
+.tuf-glass-mobile-link:not(:has(.tuf-glass-mobile-link-desc)) { flex-direction: row; align-items: center; font-weight: 600; color: #0f172a; }
+.tuf-glass-mobile-sep { height: 1px; background: #e2e8f0; margin: 10px 0; }
+.tuf-glass-mobile-ctas { display: grid; gap: 10px; margin-top: 16px; padding-top: 16px; border-top: 1px solid #e2e8f0; }
+
+/* ------------------------------------------------------------------
+   Navbar — HTML positioned ON TOP OF hero image, transparent (legacy)
+   Kept for backward compat; new glass nav uses .tuf-glass-* above.
+   spec: position:absolute top:0 left0 right0 z-index20
+         display:grid grid-template-columns:1fr auto 1fr
+         max-width:1120px margin:0 auto padding:20px 24px
+         center genuinely centered, right justify-self:end
+   ------------------------------------------------------------------ */
+.landing-nav,
+.tuf-hero-nav {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 20;
+  background: transparent;
+  padding: 0;
+}
+
+.landing-nav-inner,
+.tuf-hero-nav-inner {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+  max-width: 1120px;
+  margin: 0 auto;
+  padding: 20px 24px;
+  gap: 1rem;
+}
+
+/* left: logo */
+.tuf-hero-logo { display: inline-flex; align-items: center; gap: 0.55rem; font-weight: 800; font-size: 1.1rem; color: #0f172a; text-decoration: none; letter-spacing: -0.03em; justify-self: start; }
+.tuf-hero-logo-img { width: 28px; height: 28px; border-radius: 8px; display: block; }
+
+/* center: nav — genuinely centered regardless of logo width */
+.tuf-hero-links,
+.landing-nav-center {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 1.6rem;
+  justify-self: center;
+}
+.tuf-hero-link { font-size: 0.9rem; font-weight: 500; color: rgba(15,23,42,0.85); text-decoration: none; text-shadow: 0 1px 8px rgba(255,255,255,0.8); transition: color 150ms ease; }
+.tuf-hero-link:hover { color: #0f172a; }
+.tuf-hero-link-muted { color: rgba(15,23,42,0.75); }
+
+/* right: actions — align to far right */
+.tuf-hero-actions,
+.nav-actions {
+  justify-self: end;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+.tuf-hero-cta { box-shadow: 0 4px 16px rgba(29,112,245,0.25); }
+.tuf-hero-menu-btn { display: none; background: rgba(255,255,255,0.9); border: 1px solid #e2e8f0; border-radius: 10px; width: 36px; height: 36px; align-items: center; justify-content: center; cursor: pointer; color: #0f172a; }
+
+/* mobile dropdown inside hero */
+.tuf-hero-mobile { margin: 58px 16px 0; background: rgba(255,255,255,0.96); border: 1px solid #e2e8f0; border-radius: 14px; padding: 1rem; display: grid; gap: 0.5rem; box-shadow: 0 10px 25px rgba(0,0,0,0.08); }
+.tuf-hero-mobile-link { font-size: 0.95rem; font-weight: 600; color: #334155; text-decoration: none; padding: 0.5rem 0.6rem; border-radius: 8px; }
+.tuf-hero-mobile-link:hover { background: #f8fafc; }
+.tuf-hero-mobile-ctas { display: grid; gap: 0.6rem; padding-top: 0.5rem; border-top: 1px solid #f1f5f9; margin-top: 0.5rem; }
+
+/* ------------------------------------------------------------------
+   Hero content — above background, below dashboard
+   spec: position relative; z-index 5; max-width 900; margin auto; padding-top 230; text-align center
+   ------------------------------------------------------------------ */
+.tuf-hero-new-inner,
+.hero-content,
+.tuf-hero-content {
+  position: relative;
+  z-index: 5;
+  max-width: 900px;
+  margin: 0 auto;
+  padding-top: 230px;
+  padding-bottom: 64px;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  flex: 1;
+  justify-content: center;
+}
+
+.tuf-hero-badge { display: inline-flex; align-items: center; gap: 0.5rem; background: rgba(255,255,255,0.92); border: 1px solid #e2e8f0; border-radius: 9999px; padding: 0.35rem 0.85rem; font-size: 0.82rem; font-weight: 600; color: #475569; box-shadow: 0 2px 10px rgba(0,0,0,0.06); margin-bottom: 18px; }
+.tuf-hero-badge-dot { width: 8px; height: 8px; border-radius: 50%; background: #1d70f5; box-shadow: 0 0 0 6px rgba(29,112,245,0.12); flex: none; }
+.tuf-hero-new-title { font-size: 3.4rem; font-weight: 800; line-height: 1.05; letter-spacing: -0.04em; color: #0f172a; margin: 0; text-shadow: 0 2px 18px rgba(255,255,255,0.9); max-width: 16ch; }
+.tuf-hero-new-sub { font-size: 1.12rem; color: rgba(15,23,42,0.72); margin: 14px 0 0; text-shadow: 0 1px 8px rgba(255,255,255,0.85); max-width: 60ch; }
+.tuf-hero-new-ctas { display: flex; align-items: center; gap: 0.9rem; margin-top: 26px; flex-wrap: wrap; justify-content: center; }
+.tuf-hero-secondary { background: rgba(255,255,255,0.94) !important; border-color: #e2e8f0 !important; box-shadow: 0 2px 10px rgba(0,0,0,0.06); }
+
+/* ------------------------------------------------------------------
+   Dashboard preview — REAL screenshot floating over hero bottom
+   FIX: anchor absolutely so hero height is fixed and background doesn't follow preview
+   spec target:
+     position:absolute left:50% bottom:-140px transform:translateX(-50%)
+     width min(1080px,88vw) z-index10
+     border 1px solid rgba(20,35,60,0.14) radius 18 overflow hidden
+     shadow 0 35px 90px rgba(0,0,0,0.22), 0 12px 30px rgba(0,0,0,0.12)
+     img width100% height auto — NO cropping / object-fit:cover
+   The preview starts INSIDE the hero but extends into the white section.
+   DO NOT use margin-bottom:-140px to create overlap.
+   ------------------------------------------------------------------ */
+.tuf-hero-preview-wrap,
+.dashboard-preview-wrap {
+  /* legacy wrappers — no longer used; kept for back-compat but hidden */
+  display: contents;
+}
+
+/* spec class .dashboard-preview + legacy .tuf-dash-preview both work
+   DESKTOP FIX: dashboard was covering CTA (bottom -300 → top ~538, gap 38px).
+   Move to bottom -360 → top ~598 (182px above hero bottom, ~23% overlap) so
+   headline/subtitle/both CTAs remain fully visible with breathing space.
+   Real dashboard 1770x888 (~0.5) at 1080 wide => ~542 tall.
+*/
+.dashboard-preview,
+.tuf-dash-preview {
+  position: absolute;
+  left: 50%;
+  bottom: -360px;
+  transform: translateX(-50%);
+  z-index: 10;
+  width: min(1080px, 88vw);
+  border: 1px solid rgba(20, 35, 60, 0.14);
+  border-radius: 18px;
+  overflow: hidden;
+  box-shadow:
+    0 35px 90px rgba(0, 0, 0, 0.22),
+    0 12px 30px rgba(0, 0, 0, 0.12);
+  background: #ffffff;
+  margin: 0;
+}
+
+.dashboard-preview img,
+.tuf-dash-preview img {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+/* Legacy fake-dashboard inner styles — kept for backwards compat but unused now.
+   No height:500px; object-fit:cover; — screenshot must preserve its full layout
+   including sidebar, KPI row, chart and right rail. */
+.tuf-dash-preview-top,
+.tuf-dash-preview-brand,
+.tuf-dash-preview-dot,
+.tuf-dash-preview-badge,
+.tuf-dash-preview-actions,
+.tuf-dash-preview-pill,
+.tuf-dash-preview-btn,
+.tuf-dash-preview-kpis,
+.tuf-dash-preview-kpi,
+.tuf-dash-preview-kpi-label,
+.tuf-dash-preview-kpi-value,
+.tuf-dash-preview-kpi-sub,
+.tuf-dash-preview-grid,
+.tuf-dash-preview-main,
+.tuf-dash-preview-rail,
+.tuf-dash-preview-panel,
+.tuf-dash-preview-panel-sm,
+.tuf-dash-preview-panel-head,
+.tuf-dash-preview-panel-title,
+.tuf-dash-preview-panel-sub,
+.tuf-dash-preview-chart,
+.tuf-dash-preview-split,
+.tuf-dash-preview-list,
+.tuf-dash-preview-bars,
+.tuf-dash-preview-bar-row,
+.tuf-dash-preview-radial,
+.tuf-dash-preview-sharebar,
+.tuf-dash-preview-status { /* no-op — legacy */ }
+
+/* ------------------------------------------------------------------
+   Responsive — spec:
+   tablet: hero ~700px, preview bottom:-220px (scaled for real 1770x888 ~0.5 ratio),
+           headline smaller, 92vw. Keeps ~150px breathing space above hero bottom.
+   mobile: hero ~650px, preview bottom:-140px, 96vw
+   Real dashboard at 1080 wide ~542 tall, so desktop -300 gives top ~538 (242 above hero).
+   Tablet 92vw ~369 tall with -220 gives top ~510 (190 above hero).
+   ------------------------------------------------------------------ */
+@media (max-width: 1024px) {
+  .tuf-hero {
+    height: 700px;
+    min-height: 700px;
+  }
+  .tuf-hero-new-title { font-size: 2.8rem; }
+  .dashboard-preview,
+  .tuf-dash-preview {
+    width: 92vw;
+    bottom: -220px;
+  }
+  /* tablet white section: hero 700 + bottom 220 = preview bottom 920, height ~369 => top 551, padding ~240 */
+  .tuf-features-section,
+  .features-section {
+    padding-top: 260px;
+  }
+}
+
+@media (max-width: 768px) {
+  .tuf-hero {
+    height: 650px;
+    min-height: 650px;
+  }
+  /* keep overflow visible for absolute preview, but hide x overflow */
+  .tuf-hero { overflow: visible; }
+
+  /* collapse center nav on mobile */
+  .tuf-hero-links,
+  .landing-nav-center,
+  .tuf-glass-center { display: none; }
+  .tuf-hero-menu-btn,
+  .tuf-glass-menu-btn { display: inline-flex; }
+
+  /* grid collapses visually but keeps right actions pinned */
+  .landing-nav-inner,
+  .tuf-hero-nav-inner,
+  .tuf-glass-nav {
+    grid-template-columns: 1fr auto;
+    padding: 0 8px;
+  }
+  .tuf-glass-sticky-wrap { padding: 8px 8px 0; }
+  .tuf-hero-actions,
+  .nav-actions,
+  .tuf-glass-actions { gap: 8px; }
+  .tuf-glass-link { font-size: 0.82rem; padding: 0.3rem 0.5rem; }
+
+  .tuf-hero-new-inner,
+  .hero-content,
+  .tuf-hero-content {
+    padding-top: 140px;
+    padding-bottom: 40px;
+  }
+  .tuf-hero-new-title { font-size: 2.2rem; }
+
+  /* reduce overlap on mobile: real dashboard short, keep ~80px gap above hero bottom */
+  .dashboard-preview,
+  .tuf-dash-preview {
+    width: 96vw;
+    bottom: -140px;
+    margin: 0;
+    border-radius: 14px;
+  }
+  .tuf-hero-preview-wrap,
+  .dashboard-preview-wrap { padding-left: 0; padding-right: 0; }
+
+  /* mobile white section: hero 650 + bottom 140 = preview bottom 790, height ~187 => top 603, padding ~180 */
+  .tuf-features-section,
+  .features-section { padding-top: 180px; }
+
+  /* prevent horizontal scroll from preview shadow */
+  .tuf-landing { overflow-x: hidden; }
+}
+
+/* ==========================================================================
+   Hero Section (legacy two-column marketing grid — unused by new hero)
    ========================================================================== */
 
 .tuf-hero {
@@ -552,9 +1037,16 @@
    Core Class / Placement Ready Section
    ========================================================================== */
 
-.tuf-features-section {
-  padding: 4.5rem 0 5rem 0;
+/* Because the real dashboard preview overlaps the hero bottom by ~360px (desktop, 542 tall → top ~598),
+   the white section needs padding so heading sits just below preview bottom.
+   Hero bottom 780 + padding 400 = content at 1180, preview bottom 1140 (780+360) => 40px gap. */
+.tuf-features-section,
+.features-section {
+  position: relative;
+  z-index: 1;
+  padding: 400px 0 5rem 0;
   border-top: 1px solid var(--tuf-slate-100);
+  background: #ffffff;
 }
 
 .tuf-tab-bar {
