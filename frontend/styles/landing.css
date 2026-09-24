@@ -267,16 +267,17 @@
 }
 
 /* ==========================================================================
-   Glass Navbar — floating sticky pill (light glass for bright hero)
-   Inspired by reference sticky glass pill but adapted to TaskFlow light theme.
-   Position sticky top:12px so it floats over hero without altering hero height.
+   Glass Navbar — floating FIXED pill (light glass for bright hero)
+   Fixed so it stays visible while scrolling entire page (hero → features → pricing → footer).
+   Previously sticky inside hero disappeared when hero scrolled out.
    ========================================================================== */
 .tuf-glass-sticky-wrap {
-  position: sticky;
+  position: fixed;
   top: 12px;
-  z-index: 40;
-  padding: 12px 16px 0;
-  margin-bottom: -64px;
+  left: 0;
+  right: 0;
+  z-index: 100;
+  padding: 0 16px;
   pointer-events: none;
 }
 .tuf-glass-nav {
@@ -542,16 +543,16 @@
 }
 
 /* spec class .dashboard-preview + legacy .tuf-dash-preview both work
-   FIX 2: dashboard was too low (bottom -560) showing only top strip.
-   Real dashboard 1770x888 (~0.5 aspect) at 1080 wide => ~542 tall.
-   With hero 780 and bottom -300, top ~538 (242px above hero bottom) so
-   substantial dashboard visible in first viewport while headline/CTA stay clear.
+   DESKTOP FIX: dashboard was covering CTA (bottom -300 → top ~538, gap 38px).
+   Move to bottom -360 → top ~598 (182px above hero bottom, ~23% overlap) so
+   headline/subtitle/both CTAs remain fully visible with breathing space.
+   Real dashboard 1770x888 (~0.5) at 1080 wide => ~542 tall.
 */
 .dashboard-preview,
 .tuf-dash-preview {
   position: absolute;
   left: 50%;
-  bottom: -300px;
+  bottom: -360px;
   transform: translateX(-50%);
   z-index: 10;
   width: min(1080px, 88vw);
@@ -1036,14 +1037,14 @@
    Core Class / Placement Ready Section
    ========================================================================== */
 
-/* Because the real dashboard preview overlaps the hero bottom by ~300px (desktop, 542 tall),
+/* Because the real dashboard preview overlaps the hero bottom by ~360px (desktop, 542 tall → top ~598),
    the white section needs padding so heading sits just below preview bottom.
-   Hero bottom 780 + padding 340 = content at 1120, preview bottom 1080 (780+300) => 40px gap. */
+   Hero bottom 780 + padding 400 = content at 1180, preview bottom 1140 (780+360) => 40px gap. */
 .tuf-features-section,
 .features-section {
   position: relative;
   z-index: 1;
-  padding: 340px 0 5rem 0;
+  padding: 400px 0 5rem 0;
   border-top: 1px solid var(--tuf-slate-100);
   background: #ffffff;
 }
