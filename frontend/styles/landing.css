@@ -324,6 +324,17 @@
   font-weight: 600;
   color: #142033;
 }
+/* BookDemoButton renders a <button> — reset native button chrome so it matches the former <a> */
+button.tuf-glass-link {
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  font-family: inherit;
+}
+button.tuf-btn-secondary-lg {
+  width: 100%;
+  font-family: inherit;
+}
 .tuf-glass-actions {
   justify-self: end;
   display: flex;
@@ -386,6 +397,7 @@
   display: grid;
   place-items: start center;
   padding: 12px;
+  pointer-events: auto;
 }
 .tuf-glass-mobile-backdrop {
   position: absolute;
@@ -657,7 +669,10 @@
   .tuf-hero-actions,
   .nav-actions,
   .tuf-glass-actions { gap: 8px; }
-  .tuf-glass-link { font-size: 0.82rem; padding: 0.3rem 0.5rem; }
+  /* mobile bar shows logo + hamburger only — Log in / Book a demo /
+     Get started live in the overlay, so they can't collide with the logo */
+  .tuf-glass-actions > a,
+  .tuf-glass-actions > button:not(.tuf-glass-menu-btn) { display: none; }
 
   .tuf-hero-new-inner,
   .hero-content,
