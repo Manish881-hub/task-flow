@@ -6,6 +6,7 @@ import ErrorBanner from "../components/ErrorBanner";
 import EmptyState from "../components/EmptyState";
 import Skeleton from "../components/Skeleton";
 import ActivityFeed from "../components/ActivityFeed";
+import ThemeToggle from "../components/dashboard/ThemeToggle";
 import { apiDelete, apiGet, apiPost, getErrorMessage } from "../lib/api";
 import { useAuth } from "../lib/auth";
 import { useTaskFlowSocket } from "../hooks/useSocket";
@@ -272,6 +273,7 @@ function DashboardInner() {
                 </button>
               </div>
               <span className="dash-date">{fmtDay(today)}, {today.getFullYear()}</span>
+              <ThemeToggle />
               <button type="button" className="dash-btn-secondary" onClick={refresh} disabled={refreshing || state === "loading"}>
                 {refreshing ? "Refreshing…" : "Refresh"}
               </button>
