@@ -2,10 +2,11 @@ import { Head, Html, Main, NextScript } from "next/document";
 
 export default function Document() {
   return (
-    // `dark` activates the dark shadcn tokens pre-hydration; the inline
-    // body paint covers the very first frame and _app clears it on mount
-    // so light pages (login, landing) are unaffected afterwards.
-    <Html lang="en" className="dark">
+    // No hardcoded theme class here — next-themes injects its detection
+    // script and sets the correct `dark` class before first paint.
+    // suppressHydrationWarning is required because that class differs
+    // between server HTML and the hydrated client.
+    <Html lang="en" suppressHydrationWarning>
       <Head>
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
@@ -15,7 +16,7 @@ export default function Document() {
         />
         <link rel="icon" type="image/png" href="/logo.png" />
       </Head>
-      <body style={{ background: "#111111", color: "#f5f5f5" }}>
+      <body>
         <Main />
         <NextScript />
       </body>
