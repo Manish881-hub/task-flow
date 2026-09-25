@@ -215,11 +215,14 @@
   z-index: 2;
   height: 780px;
   min-height: 780px;
-  background: transparent;
+  background: #fff;
   overflow: visible;
 }
 
-/* single hero background layer — ONLY place hero.png is used */
+/* single hero background layer — ONLY place hero.png is used.
+   Bottom edge feathers into the white page via CSS mask (mask affects
+   ONLY this layer: hero content, navbar and dashboard preview are untouched).
+   White .tuf-hero behind the transparent end of the mask = organic fade. */
 .tuf-hero-background {
   position: absolute;
   inset: 0;
@@ -228,6 +231,24 @@
   background-size: cover;
   background-position: center center;
   background-repeat: no-repeat;
+  -webkit-mask-image: linear-gradient(
+    to bottom,
+    black 0%,
+    black 78%,
+    rgba(0,0,0,.9) 84%,
+    rgba(0,0,0,.55) 92%,
+    transparent 100%
+  );
+  mask-image: linear-gradient(
+    to bottom,
+    black 0%,
+    black 78%,
+    rgba(0,0,0,.9) 84%,
+    rgba(0,0,0,.55) 92%,
+    transparent 100%
+  );
+  -webkit-mask-repeat: no-repeat;
+  mask-repeat: no-repeat;
 }
 
 /* very light overlay — do NOT darken the bright landscape */
@@ -631,6 +652,25 @@ button.tuf-btn-secondary-lg {
     min-height: 700px;
   }
   .tuf-hero-new-title { font-size: 2.8rem; }
+  /* tablet: slightly deeper fade for the shorter 700px stage */
+  .tuf-hero-background {
+    -webkit-mask-image: linear-gradient(
+      to bottom,
+      black 0%,
+      black 74%,
+      rgba(0,0,0,.9) 82%,
+      rgba(0,0,0,.55) 91%,
+      transparent 100%
+    );
+    mask-image: linear-gradient(
+      to bottom,
+      black 0%,
+      black 74%,
+      rgba(0,0,0,.9) 82%,
+      rgba(0,0,0,.55) 91%,
+      transparent 100%
+    );
+  }
   .dashboard-preview,
   .tuf-dash-preview {
     width: 92vw;
@@ -681,6 +721,25 @@ button.tuf-btn-secondary-lg {
     padding-bottom: 40px;
   }
   .tuf-hero-new-title { font-size: 2.2rem; }
+  /* mobile: shorter ~80-100px fade so the 650px hero never looks washed out */
+  .tuf-hero-background {
+    -webkit-mask-image: linear-gradient(
+      to bottom,
+      black 0%,
+      black 85%,
+      rgba(0,0,0,.9) 90%,
+      rgba(0,0,0,.55) 95%,
+      transparent 100%
+    );
+    mask-image: linear-gradient(
+      to bottom,
+      black 0%,
+      black 85%,
+      rgba(0,0,0,.9) 90%,
+      rgba(0,0,0,.55) 95%,
+      transparent 100%
+    );
+  }
 
   /* reduce overlap on mobile: real dashboard short, keep ~80px gap above hero bottom */
   .dashboard-preview,
