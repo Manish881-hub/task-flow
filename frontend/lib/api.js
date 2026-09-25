@@ -2,6 +2,10 @@
  * Typed fetch wrapper for TaskFlow API.
  *
  * - BASE_URL comes from NEXT_PUBLIC_API_URL (default http://localhost:8000).
+ * - Same-domain deploys (e.g. Vercel Services, frontend + backend on one
+ *   domain) need zero config: when the page is NOT on localhost, API calls
+ *   default to the page origin, so /api/v1/* and /ws ride the same domain
+ *   (same-site cookies, trivial CORS). getWsBase() derives ws(s):// from it.
  * - Access token lives ONLY in memory (module variable). Never localStorage.
  * - Transparent 401 refresh: on 401, POST /api/v1/auth/refresh once
  *   (credentials:include so httpOnly cookie travels), then retry once.
@@ -9,8 +13,20 @@
  * - No hardcoded URLs — everything resolves through BASE_URL / WS_BASE.
  */
 
-const BASE_URL =
-  (process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000").replace(/\/$/, "");
+function defaultBaseUrl() {
+  if (typeof window !== "undefined" && window.location && window.location.origin) {
+    const origin = window.location.origin;
+    // Local dev serves the frontend from :3000 while the API is on :8000,
+    // so only localhost keeps the explicit dev default. Any other host is a
+    // same-domain deployment where the origin IS the API base.
+    if (!/^(https?:\/\/)?(localhost|127\.0\.0\.1)(:\d+)?$/i.test(origin)) {
+      return origin;
+    }
+  }
+  return "http://localhost:8000";
+}
+
+const BASE_URL = (process.env.NEXT_PUBLIC_API_URL || defaultBaseUrl()).replace(/\/$/, "");
 
 export function getWsBase() {
   const explicit = process.env.NEXT_PUBLIC_WS_URL;

@@ -135,11 +135,31 @@ Errors: `{error:{code,message,details}, request_id}`. Lists: `{data,meta:{total,
 - Repo checks: `docker compose config` valid; no placeholder image URLs; no emojis (SVG icons); no hardcoded API URLs (env only); no `localStorage` tokens; CI in `.github/workflows/ci.yml` runs both suites.
 - Live WS verified: authenticated connect, non-member join rejected, task/comment broadcasts room-scoped, personal assigned push.
 
+## Production deployment (Vercel)
+
+Target: one Vercel project, one public domain, two services (`vercel.json`).
+
+```text
+                https://<your-app>.vercel.app
+                     │            │
+              /(.*) → frontend  /api/*, /ws, /health, /ready → backend
+              Next.js           FastAPI (app.main:app)
+```
+
+- **Why one domain:** same-site refresh cookies (`HttpOnly`, `Secure` in prod, `Path=/api/v1/auth`, `SameSite=Lax`) keep working with zero weakening, and CORS is trivial. No split-domain cookie/CORS surgery needed.
+- **Project setup:** set the Vercel project framework to **Services** and deploy — `vercel.json` routes `/api/(.*)`, `/ws`, `/health`, `/ready` to the backend service, everything else to the frontend. The backend receives original paths, so no route renames were needed (`/api/v1/*` mounts as-is).
+- **Frontend env (BUILD-TIME):** `NEXT_PUBLIC_API_URL=https://<domain>`, `NEXT_PUBLIC_WS_URL=wss://<domain>`. Omit both and any non-localhost host defaults to `window.location.origin` automatically.
+- **Backend env (runtime):** `DATABASE_URL` (managed Postgres, e.g. `postgresql+psycopg2://…`), `JWT_SECRET` (≥32 chars, `openssl rand -hex 32`), `CORS_ORIGINS=https://<domain>`, `ENV=prod`, plus `JWT_EXPIRES_MIN`/`REFRESH_DAYS`/`RATE_LIMIT_ENABLED` as needed. Python pinned via `backend/.python-version` (3.12).
+- **Migrations:** run `alembic upgrade head` against the production DB before serving traffic (`backend/alembic/env.py` reads `DATABASE_URL`). Lifespan `create_all` remains as a safety net only.
+- **Auth in prod:** unchanged behavior — 15-min JWT in memory, 7-day rotating HttpOnly refresh cookie, reuse kills all sessions, logout revokes refresh (access JWT lives ≤15 min by design). Verify: signup → login → refresh rotation → logout → old refresh 401s.
+- **WebSocket limit (demo-acceptable):** the room manager is in-process. On serverless multi-instance, two users can land on different instances and miss each other's room events; auto-reconnect + silent resync bounds the damage, but true fan-out needs Redis pub/sub (documented, not built). Fine for a demo recording; not for production scale.
+- **Verify live:** `/health` + `/ready` → ok; signup → create project → invite → assign → Assigned-to-me → comment → Done-as-assignee → 403-as-other-member → second window sees it live → logout.
+
 ## Known limits / next steps
 
 - Alembic migration `0001_initial.py` ships; dev fallback `create_all` remains for SQLite/tests — production should run `alembic upgrade head` (compose does).
 - WS manager is in-process; multi-replica needs Redis pub/sub.
-- No account lockout on repeated failed logins (rate limit only); no list virtualization for 1000s of tasks; no optimistic drag-drop rollback (server is source of truth, refetch on WS event).
+- No account lockout on repeated failed logins (rate limit only); no list virtualization for 1000s of tasks.
 
 ## AI usage disclosure
 
