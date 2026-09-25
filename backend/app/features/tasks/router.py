@@ -75,8 +75,11 @@ def list_tasks(
             raise NotFoundError("Assignee")
         q = q.filter(Task.assignee_id == aid)
     if search:
-        like = f"%{search}%"
-        q = q.filter((Task.title.ilike(like)) | (Task.description.ilike(like)))
+        # Escape LIKE wildcards so a literal "%" or "_" in the query can't
+        # act as a wildcard (e.g. "100%" must not match "100X").
+        escaped = search.replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_")
+        like = f"%{escaped}%"
+        q = q.filter((Task.title.ilike(like, escape="\\")) | (Task.description.ilike(like, escape="\\")))
     desc = order != "asc"
     if sort == "due_date":
         q = q.order_by(Task.due_date.desc() if desc else Task.due_date.asc())
