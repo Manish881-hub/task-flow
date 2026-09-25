@@ -51,9 +51,13 @@ class Project(Base):
     owner_id: Mapped[uuid.UUID] = mapped_column(GUID(), ForeignKey("users.id"), nullable=False)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow, nullable=False)
 
-    members: Mapped[list["ProjectMember"]] = relationship(cascade="all, delete-orphan", passive_deletes=True)
-    tasks: Mapped[list["Task"]] = relationship(cascade="all, delete-orphan", passive_deletes=True)
-    activities: Mapped[list["ActivityLog"]] = relationship(cascade="all, delete-orphan", passive_deletes=True)
+    # ORM-level delete-orphan (no passive_deletes): SQLAlchemy deletes children
+    # itself, so cascades work on every backend. SQLite never enforces FK
+    # ON DELETE CASCADE (no PRAGMA), so relying on the DB alone orphans rows
+    # in dev/tests. DDL ondelete="CASCADE" stays as a Postgres backstop.
+    members: Mapped[list["ProjectMember"]] = relationship(cascade="all, delete-orphan")
+    tasks: Mapped[list["Task"]] = relationship(cascade="all, delete-orphan")
+    activities: Mapped[list["ActivityLog"]] = relationship(cascade="all, delete-orphan")
 
 
 class ProjectMember(Base):
@@ -83,7 +87,7 @@ class Task(Base):
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow, nullable=False)
     updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow, onupdate=utcnow, nullable=False)
 
-    comments: Mapped[list["Comment"]] = relationship(cascade="all, delete-orphan", passive_deletes=True)
+    comments: Mapped[list["Comment"]] = relationship(cascade="all, delete-orphan")
 
 
 class Comment(Base):
