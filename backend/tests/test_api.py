@@ -557,6 +557,73 @@ def test_delete_project_cascades_cleanly(client):
         db.close()
 
 
+def test_task_combined_filters_search_sort_pagination(client):
+    """Req 13+14: filters combine (AND), search is literal, sort orders hold,
+    pagination is server-side (disjoint pages, correct totals)."""
+    signup(client, "Alice", "alice@example.com")
+    signup(client, "Bob", "bob@example.com")
+    a = login(client, "alice@example.com")
+    b = login(client, "bob@example.com")
+    bob_id = client.get("/api/v1/auth/me", headers=authz(b["access_token"])).json()["data"]["id"]
+    alice_id = a["user"]["id"]
+    p = make_project(client, a["access_token"])
+    pid = p["id"]
+    client.post(
+        f"/api/v1/projects/{pid}/members",
+        json={"email": "bob@example.com", "role": "member"},
+        headers=authz(a["access_token"]),
+    )
+    specs = [
+        {"title": "Alpha launch", "status": "To Do", "priority": "High", "assignee_id": bob_id},
+        {"title": "Beta launch", "status": "In Progress", "priority": "Low", "assignee_id": alice_id},
+        {"title": "Gamma cleanup", "status": "Done", "priority": "Medium"},
+        {"title": "100% coverage", "status": "To Do", "priority": "Low"},
+        {"title": "Delta docs", "status": "To Do", "priority": "Medium"},
+    ]
+    for s in specs:
+        r = client.post(f"/api/v1/projects/{pid}/tasks", json=s, headers=authz(a["access_token"]))
+        assert r.status_code == 201, r.text
+    base = f"/api/v1/projects/{pid}/tasks"
+
+    def titles(qs):
+        r = client.get(f"{base}?{qs}", headers=authz(a["access_token"]))
+        assert r.status_code == 200, r.text
+        return [t["title"] for t in r.json()["data"]], r.json()
+
+    # All four filters ANDed together isolate exactly one task.
+    got, _ = titles(f"status=To%20Do&priority=High&assignee_id={bob_id}&search=alpha")
+    assert got == ["Alpha launch"], got
+    # Assignee + priority together (req 13's explicit case).
+    got, _ = titles(f"assignee_id={bob_id}&priority=High")
+    assert got == ["Alpha launch"], got
+    # Search is literal: "100_" must not wildcard-match "100% coverage".
+    got, _ = titles("search=100_")
+    assert got == [], got
+    got, _ = titles("search=100%25")
+    assert got == ["100% coverage"], got
+    # Priority ordering both directions.
+    got, _ = titles("sort=priority&order=desc&per_page=100")
+    pris = [
+        t["priority"]
+        for t in client.get(f"{base}?sort=priority&order=desc&per_page=100", headers=authz(a["access_token"])).json()["data"]
+    ]
+    assert pris == ["High", "Medium", "Medium", "Low", "Low"], pris
+    got, body = titles("sort=priority&order=asc&per_page=100")
+    assert [t["priority"] for t in body["data"]] == ["Low", "Low", "Medium", "Medium", "High"]
+    # Server-side pagination: disjoint pages, truthful totals.
+    _, p1 = titles("per_page=2&page=1&sort=created_at&order=asc")
+    _, p2 = titles("per_page=2&page=2&sort=created_at&order=asc")
+    _, p3 = titles("per_page=2&page=3&sort=created_at&order=asc")
+    assert p1["meta"]["total"] == 5
+    assert p1["meta"]["total_pages"] == 3
+    ids1 = [t["id"] for t in p1["data"]]
+    ids2 = [t["id"] for t in p2["data"]]
+    ids3 = [t["id"] for t in p3["data"]]
+    assert len(ids1) == 2 and len(ids2) == 2 and len(ids3) == 1
+    assert not (set(ids1) & set(ids2) & set(ids3))
+    assert len(set(ids1) | set(ids2) | set(ids3)) == 5
+
+
 def test_health_ready(client):
     assert client.get("/health").json() == {"status": "ok"}
     r = client.get("/ready")
