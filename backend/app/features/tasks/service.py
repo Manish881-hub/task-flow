@@ -70,19 +70,24 @@ def create_task(db: Session, pid: str, uid: uuid.UUID, data: dict) -> Task:
         is_assignee = aid is not None and aid == uid
         if not is_assignee and membership.role != "owner":
             raise ForbiddenError("Only assignee or owner can mark Done")
-    t = repo.create_task(
-        db,
-        project_id=pid_u,
-        title=data["title"],
-        description=data.get("description") or "",
-        status=data.get("status") or "To Do",
-        priority=data.get("priority") or "Medium",
-        due_date=data.get("due_date"),
-        assignee_id=aid,
-        created_by=uid,
-        completed_at=utcnow() if (data.get("status") == "Done") else None,
-    )
-    repo.log(db, pid_u, uid, "task_created", f"Task '{t.title}' created")
+    try:
+        t = repo.create_task(
+            db,
+            project_id=pid_u,
+            title=data["title"],
+            description=data.get("description") or "",
+            status=data.get("status") or "To Do",
+            priority=data.get("priority") or "Medium",
+            due_date=data.get("due_date"),
+            assignee_id=aid,
+            created_by=uid,
+            completed_at=utcnow() if (data.get("status") == "Done") else None,
+        )
+        repo.log(db, pid_u, uid, "task_created", f"Task '{t.title}' created")
+        db.commit()
+    except Exception:
+        db.rollback()
+        raise
     return t
 
 
@@ -134,12 +139,17 @@ def update_task(db: Session, pid: str, tid: str, uid: uuid.UUID, data: dict) -> 
     t = repo.save(db, t)
     # Distinct activity events so the feed can show "moved" vs "assigned"
     # (spec item 21) instead of one generic "updated" bucket.
-    if status_changed:
-        repo.log(db, pid_u, uid, "task_moved", f"Task '{t.title}' moved {old_status} -> {t.status}")
-    if assignee_changed:
-        repo.log(db, pid_u, uid, "task_assigned", f"Task '{t.title}' assigned")
-    if not status_changed and not assignee_changed:
-        repo.log(db, pid_u, uid, "task_updated", f"Task '{t.title}' updated")
+    try:
+        if status_changed:
+            repo.log(db, pid_u, uid, "task_moved", f"Task '{t.title}' moved {old_status} -> {t.status}")
+        if assignee_changed:
+            repo.log(db, pid_u, uid, "task_assigned", f"Task '{t.title}' assigned")
+        if not status_changed and not assignee_changed:
+            repo.log(db, pid_u, uid, "task_updated", f"Task '{t.title}' updated")
+        db.commit()
+    except Exception:
+        db.rollback()
+        raise
     return t
 
 
@@ -151,8 +161,13 @@ def delete_task(db: Session, pid: str, tid: str, uid: uuid.UUID) -> Task:
     is_creator = t.created_by is not None and uuid.UUID(str(t.created_by)) == uid
     if membership.role != "owner" and not is_creator:
         raise ForbiddenError("Owner or creator can delete")
-    repo.delete_task(db, t)
-    repo.log(db, pid_u, uid, "task_deleted", f"Task '{t.title}' deleted")
+    try:
+        repo.delete_task(db, t)
+        repo.log(db, pid_u, uid, "task_deleted", f"Task '{t.title}' deleted")
+        db.commit()
+    except Exception:
+        db.rollback()
+        raise
     return t
 
 
@@ -161,6 +176,11 @@ def create_comment(db: Session, pid: str, tid: str, uid: uuid.UUID, content: str
     tid_u = _uuid(tid, "Task")
     _get_scoped_task(db, pid_u, tid_u)
     _require_member(db, pid_u, uid)
-    c = repo.create_comment(db, tid_u, uid, content)
-    repo.log(db, pid_u, uid, "comment_created", "Comment added")
+    try:
+        c = repo.create_comment(db, tid_u, uid, content)
+        repo.log(db, pid_u, uid, "comment_created", "Comment added")
+        db.commit()
+    except Exception:
+        db.rollback()
+        raise
     return c
