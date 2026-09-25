@@ -1671,19 +1671,21 @@ button.tuf-btn-secondary-lg {
 }
 
 /* Giant background watermark — deliberate backdrop behind lower footer.
-   Tucked baseline (-18px, no descenders in "TaskFlow") so the full word
-   stays recognizable and is never hard-clipped mid-glyph. Content sits at z-index 1. */
+   Solid slate tint (no washed-out opacity) so it reads on white.
+   Sits on the baseline (bottom: 0, line-height: 1) instead of tucked/clipped.
+   Content stays at z-index 1 above it. */
 .tuf-footer-watermark {
   position: absolute;
   left: 50%;
-  bottom: -6px;
+  bottom: 0;
   transform: translateX(-50%);
   z-index: 0;
   font-size: clamp(120px, 14vw, 180px);
-  font-weight: 700;
+  font-weight: 800;
   letter-spacing: -0.06em;
-  color: #eaf1ff;
-  opacity: 0.3;
+  line-height: 1;
+  color: #dbe3f0;
+  opacity: 1;
   white-space: nowrap;
   pointer-events: none;
   user-select: none;
@@ -1732,7 +1734,7 @@ button.tuf-btn-secondary-lg {
 
   .tuf-footer-watermark {
     font-size: 7rem;
-    bottom: -12px;
+    bottom: 0;
   }
 }
 
@@ -1842,14 +1844,17 @@ button.tuf-btn-secondary-lg {
   /* Tablet portrait (768px): keep a small subtle watermark behind the footer. */
   .tuf-footer-watermark {
     font-size: 4rem;
-    bottom: -8px;
+    bottom: 0;
   }
 }
 
-/* Below tablet: hide the giant watermark entirely — it competes with the
-   legal row on phones and must not affect layout height. */
+/* Below tablet: small faint watermark — stays behind content, never affects
+   layout height (absolute positioned). */
 @media (max-width: 767px) {
   .tuf-footer-watermark {
-    display: none;
+    display: block;
+    font-size: 3rem;
+    color: #e2e8f0;
+    bottom: 0;
   }
 }
