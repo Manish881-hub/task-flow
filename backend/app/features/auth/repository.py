@@ -33,3 +33,20 @@ def create_refresh(db: Session, user_id, token_hash: str, expires_at) -> Refresh
 def revoke_refresh(db: Session, row: RefreshToken) -> None:
     row.revoked = True
     db.commit()
+
+
+def revoke_all_user_refreshes(db: Session, user_id) -> int:
+    """Revoke every active refresh token for a user. Returns count revoked.
+
+    Used on refresh-token reuse (possible theft): a single compromised token
+    must not leave sibling sessions valid.
+    """
+    rows = (
+        db.query(RefreshToken)
+        .filter(RefreshToken.user_id == user_id, RefreshToken.revoked == False)  # noqa: E712
+        .all()
+    )
+    for row in rows:
+        row.revoked = True
+    db.commit()
+    return len(rows)

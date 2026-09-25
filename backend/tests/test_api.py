@@ -110,6 +110,78 @@ def test_refresh_missing_token_401(client):
     assert r.status_code == 401
 
 
+def test_expired_access_token_401_then_refresh_retry(client):
+    """Expired access JWT → 401; refresh cookie rotates; retry succeeds."""
+    import jwt as pyjwt
+    from datetime import timezone
+
+    from app.core.config import settings
+
+    signup(client)
+    data = login(client)
+    uid = data["user"]["id"]
+    # Valid token works.
+    r = client.get("/api/v1/auth/me", headers=authz(data["access_token"]))
+    assert r.status_code == 200
+    # Forged-expired token → 401 (expired, UNAUTHORIZED envelope).
+    expired = pyjwt.encode(
+        {"sub": uid, "exp": datetime.now(timezone.utc) - timedelta(minutes=5)},
+        settings.JWT_SECRET,
+        algorithm="HS256",
+    )
+    r = client.get("/api/v1/auth/me", headers=authz(expired))
+    assert r.status_code == 401, r.text
+    assert r.json()["error"]["code"] == "UNAUTHORIZED"
+    # Refresh via cookie rotates; retry with the new token succeeds.
+    old_cookie = client.cookies.get("refresh_token")
+    r = client.post("/api/v1/auth/refresh")
+    assert r.status_code == 200, r.text
+    new_token = r.json()["data"]["access_token"]
+    assert client.cookies.get("refresh_token") != old_cookie
+    r = client.get("/api/v1/auth/me", headers=authz(new_token))
+    assert r.status_code == 200
+    assert r.json()["data"]["id"] == uid
+
+
+def test_refresh_reuse_revokes_family(client):
+    """Reusing a revoked refresh token kills all sibling sessions (theft response)."""
+    signup(client)
+    login(client)
+    cookie_a = client.cookies.get("refresh_token")
+    login(client)
+    cookie_b = client.cookies.get("refresh_token")
+    assert cookie_a and cookie_b and cookie_a != cookie_b
+
+    def refresh_with(raw):
+        # Per-request cookies bypass the jar (avoids domain/path collisions).
+        return client.post("/api/v1/auth/refresh", cookies={"refresh_token": raw})
+
+    # Rotate A → A' valid, A revoked.
+    r = refresh_with(cookie_a)
+    assert r.status_code == 200, r.text
+    cookie_a2 = r.cookies.get("refresh_token")
+    assert cookie_a2 and cookie_a2 != cookie_a
+    # Reuse revoked A → 401 + family kill.
+    r = refresh_with(cookie_a)
+    assert r.status_code == 401, r.text
+    # Siblings (A' and B) are dead too.
+    assert refresh_with(cookie_a2).status_code == 401
+    assert refresh_with(cookie_b).status_code == 401
+
+
+def test_signup_name_max_length(client):
+    r = client.post(
+        "/api/v1/auth/signup",
+        json={"name": "X" * 101, "email": "long@example.com", "password": "password123"},
+    )
+    assert r.status_code == 422, r.text
+    r = client.post(
+        "/api/v1/auth/signup",
+        json={"name": "X" * 100, "email": "ok@example.com", "password": "password123"},
+    )
+    assert r.status_code == 201, r.text
+
+
 def test_naive_datetime_handling(client):
     """SQLite returns naive datetimes; refresh must not crash with naive-vs-aware TypeError."""
     signup(client)
@@ -236,6 +308,59 @@ def test_task_done_rule_and_validations(client):
     # owner can delete
     r = client.delete(f"/api/v1/projects/{p['id']}/tasks/{tid2}", headers=authz(a["access_token"]))
     assert r.status_code == 204
+
+
+def test_non_member_sweep_403(client):
+    """Every project-scoped endpoint: no token → 401, non-member → 403.
+
+    Mirrors a direct-API evaluator: authenticated ≠ authorized.
+    """
+    signup(client, "Alice", "alice@example.com")
+    signup(client, "Bob", "bob@example.com")
+    a = login(client, "alice@example.com")
+    b = login(client, "bob@example.com")
+    p = make_project(client, a["access_token"])
+    pid = p["id"]
+    # Owner creates one task + one comment to probe against.
+    r = client.post(f"/api/v1/projects/{pid}/tasks", json={"title": "T"}, headers=authz(a["access_token"]))
+    assert r.status_code == 201, r.text
+    tid = r.json()["data"]["id"]
+    r = client.post(
+        f"/api/v1/projects/{pid}/tasks/{tid}/comments",
+        json={"content": "hello"},
+        headers=authz(a["access_token"]),
+    )
+    assert r.status_code == 201, r.text
+
+    anon = [
+        ("get", f"/api/v1/projects/{pid}", None),
+        ("get", f"/api/v1/projects/{pid}/tasks", None),
+        ("get", f"/api/v1/projects/{pid}/activity", None),
+    ]
+    for method, path, body in anon:
+        r = client.request(method, path, json=body)
+        assert r.status_code == 401, (method, path, r.text)
+    # Garbage token → 401, not 500.
+    r = client.get(f"/api/v1/projects/{pid}", headers=authz("garbage"))
+    assert r.status_code == 401, r.text
+
+    non_member = [
+        ("get", f"/api/v1/projects/{pid}", None),
+        ("patch", f"/api/v1/projects/{pid}", {"name": "Hacked"}),
+        ("delete", f"/api/v1/projects/{pid}", None),
+        ("get", f"/api/v1/projects/{pid}/activity", None),
+        ("get", f"/api/v1/projects/{pid}/tasks", None),
+        ("post", f"/api/v1/projects/{pid}/tasks", {"title": "Hijack"}),
+        ("get", f"/api/v1/projects/{pid}/tasks/{tid}", None),
+        ("patch", f"/api/v1/projects/{pid}/tasks/{tid}", {"title": "Hijack"}),
+        ("delete", f"/api/v1/projects/{pid}/tasks/{tid}", None),
+        ("get", f"/api/v1/projects/{pid}/tasks/{tid}/comments", None),
+        ("post", f"/api/v1/projects/{pid}/tasks/{tid}/comments", {"content": "spam"}),
+    ]
+    for method, path, body in non_member:
+        r = client.request(method, path, json=body, headers=authz(b["access_token"]))
+        assert r.status_code == 403, (method, path, r.text)
+        assert r.json()["error"]["code"] == "FORBIDDEN"
 
 
 def test_pagination_and_filters(client):

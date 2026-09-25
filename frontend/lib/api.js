@@ -128,7 +128,7 @@ async function parseBody(res) {
   }
 }
 
-async function doRefresh() {
+async function actuallyRefresh() {
   const res = await fetch(`${BASE_URL}/api/v1/auth/refresh`, {
     method: "POST",
     credentials: "include",
@@ -145,6 +145,22 @@ async function doRefresh() {
   const token = unwrapped && (unwrapped.access_token || unwrapped.accessToken || unwrapped.token);
   if (token) setAuthToken(token);
   return data;
+}
+
+// Single-flight refresh (ECC security-review §4: session handling).
+// Concurrent 401s must share ONE /refresh call: rotation revokes the old
+// token, so independent refreshes would invalidate each other and log a
+// legitimate user out. The shared promise is never retried recursively.
+let refreshPromise = null;
+
+async function doRefresh() {
+  if (refreshPromise) {
+    return refreshPromise;
+  }
+  refreshPromise = actuallyRefresh().finally(() => {
+    refreshPromise = null;
+  });
+  return refreshPromise;
 }
 
 /**

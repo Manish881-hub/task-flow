@@ -40,7 +40,12 @@ def refresh(db: Session, raw_token: str | None):
     if not raw_token:
         raise UnauthorizedError("Missing refresh token")
     row = repo.get_refresh_by_hash(db, hash_token(raw_token))
-    if row is None or row.revoked:
+    if row is None:
+        raise UnauthorizedError("Invalid refresh token")
+    if row.revoked:
+        # Reuse of a rotated/revoked token signals possible theft: kill the
+        # whole family so a stolen sibling cannot remain valid, then 401.
+        repo.revoke_all_user_refreshes(db, row.user_id)
         raise UnauthorizedError("Invalid refresh token")
     exp = ensure_aware(row.expires_at)
     now = datetime.now(timezone.utc)

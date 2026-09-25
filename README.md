@@ -81,11 +81,14 @@ activity_log: id project_id->projects user_id->users event_type description crea
 
 ## Auth & refresh flow
 
-- Passwords: min 8 chars, ≥1 letter + ≥1 digit, ≤72 bytes (bcrypt limit). Hashed with `bcrypt.hashpw` **directly** — `passlib` is avoided because its bcrypt backend probes `bcrypt.__about__`, removed in bcrypt 4.1+.
-- Access token: JWT HS256, 15 min, claims `{sub:user_id}` only. Sent as `Authorization: Bearer`. Frontend keeps it **in memory only** (never localStorage); lost on hard refresh → silent `POST /api/v1/auth/refresh` on app start recovers it.
+- Passwords: min 8 chars, ≥1 letter + ≥1 digit, ≤72 UTF-8 bytes (bcrypt has a 72-byte input limit). Hashed with `bcrypt.hashpw` **directly** — `passlib` is avoided because its bcrypt backend probes `bcrypt.__about__`, removed in bcrypt 4.1+. DB stores only `password_hash`, never plaintext.
+- Email: normalized to lowercase (stored and compared lowercased/stripped). Name: required, max 100 chars.
+- Access token: JWT HS256, 15 min, claims `{sub:user_id}` only. Sent as `Authorization: Bearer`. The access token is held in frontend memory rather than localStorage. This avoids durable token persistence in browser storage and limits the lifetime of a stolen access token to its short expiry window. It does not itself protect against XSS running in the application context. Lost on hard refresh → silent `POST /api/v1/auth/refresh` on app start recovers it.
 - Refresh token: 7-day opaque random string, stored **httpOnly, SameSite=Lax, Path=/api/v1/auth** cookie (JS can't read it). Server stores only its SHA-256 hash (`refresh_tokens.token_hash`).
-- Refresh (`POST /api/v1/auth/refresh`): look up hash → 401 if missing/revoked/expired (datetimes normalized to UTC-aware for SQLite/Postgres parity) → else revoke old row, issue new token + cookie (**rotation**). Reuse of a revoked token is rejected, so a stolen cookie dies on next legitimate refresh.
-- Logout (`POST /api/v1/auth/logout`): revokes current token, clears cookie.
+- Refresh (`POST /api/v1/auth/refresh`): look up hash → 401 if missing/revoked/expired (datetimes normalized to UTC-aware for SQLite/Postgres parity) → else revoke old row, issue new token + cookie (**rotation**). **Reuse of a revoked token revokes all active refresh sessions for the affected user** and returns 401 with no new token — the model has no `family_id`, so reuse is treated as possible theft of any session and every session is killed. A stolen cookie can't survive alongside legitimate sessions.
+- Concurrent 401s: frontend `lib/api.js` uses a **single-flight** shared refresh promise — exactly one `/refresh` in flight; all waiting requests retry once with the rotated token. The refresh call itself never re-triggers refresh (no loops).
+- Logout (`POST /api/v1/auth/logout`): revokes refresh tokens, clears cookie. **Deliberate tradeoff:** logout ends refresh ability immediately, but an already-issued stateless access JWT stays valid until its short expiry (≤15 min). No server-side access-token blacklist by design.
+- Membership: every project-scoped backend endpoint verifies project membership itself (never trusts the client) — non-members get 403, enforced in `projects/service.py:require_membership` and `tasks/router.py:_require_member`, including comments, activity, and WS room joins.
 - Rate limited: `slowapi` on auth routes; 429 returns `{error:{code:RATE_LIMITED}}`.
 
 ## WebSocket setup
@@ -101,7 +104,7 @@ activity_log: id project_id->projects user_id->users event_type description crea
 |---|---|---|
 | `POST /auth/signup` | public | 201 `{data:{user,access_token}}` + refresh cookie (logs you in) |
 | `POST /auth/login` | public | 200 `{data:{user,access_token}}` + refresh cookie |
-| `POST /auth/refresh` | cookie | rotates, 401 on reuse/expiry |
+| `POST /auth/refresh` | cookie | rotates; reuse → 401 + all user sessions revoked, no new token |
 | `POST /auth/logout` | cookie | revokes + clears |
 | `GET /auth/me` | Bearer | current user |
 | `GET /projects?page&per_page` | Bearer | own+member, `{data,meta,links}` |
@@ -125,7 +128,8 @@ Errors: `{error:{code,message,details}, request_id}`. Lists: `{data,meta:{total,
 
 ## Tests & verification
 
-- Backend: `cd backend && pytest` — **10 passed** (signup/login/me, password rules, refresh rotation + reuse rejection, logout, SQLite naive-datetime, invite/permissions, Done rule + `completed_at`, due/assignee 422s, delete rule, pagination/filters/search, comments, health/ready, envelope shape).
+- Backend: `cd backend && pytest` — **14 passed** (signup/login/me, password rules + name max 100, refresh rotation + reuse→all-sessions-revoked, expired-access 401→refresh→retry, non-member 403 sweep across project/task/comment/activity endpoints, logout, SQLite naive-datetime, invite/permissions, Done rule + `completed_at`, due/assignee 422s, delete rule, pagination/filters/search, comments, health/ready, envelope shape).
+- Frontend: `cd frontend && npm test` — **3 passed** (`node --test`, zero deps): expired token → automatic refresh → retry succeeds with exactly one `/refresh`; three concurrent 401s share one in-flight refresh; dead refresh → 401 with token cleared and no loop. `npm run build` clean.
 - Frontend: `cd frontend && npm run build` — clean (routes `/`, `/login`, `/signup`, `/dashboard`, `/assigned`, `/projects/[id]`).
 - Repo checks: `docker compose config` valid; no placeholder image URLs; no emojis (SVG icons); no hardcoded API URLs (env only); no `localStorage` tokens; CI in `.github/workflows/ci.yml` runs both suites.
 - Live WS verified: authenticated connect, non-member join rejected, task/comment broadcasts room-scoped, personal assigned push.

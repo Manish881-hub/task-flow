@@ -28,6 +28,8 @@ class SignupIn(BaseModel):
         v = v.strip()
         if not v:
             raise ValueError("name is required")
+        if len(v) > 100:
+            raise ValueError("name must be at most 100 characters")
         return v
 
     @field_validator("password")
