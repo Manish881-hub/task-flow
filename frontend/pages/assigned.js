@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import EfferdPageShell from "../components/EfferdPageShell";
 import RequireAuth from "../components/RequireAuth";
 import EmptyState from "../components/EmptyState";
@@ -51,10 +51,19 @@ function AssignedInner() {
   }, [load]);
 
   useEffect(() => {
-    if (lastEvent && (lastEvent.type === "assigned_task_updated" || lastEvent.type?.includes("task"))) {
+    if (lastEvent && (lastEvent.type === "assigned_task_updated" || lastEvent.type?.includes("task") || lastEvent.type === "member_removed")) {
       load(true);
     }
   }, [lastEvent?._receivedAt]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Req 26: a dropped socket misses events — resync silently on reconnect.
+  const prevSocketStatus = useRef(socketStatus);
+  useEffect(() => {
+    if (prevSocketStatus.current === "Reconnecting" && socketStatus === "Live") {
+      load(true);
+    }
+    prevSocketStatus.current = socketStatus;
+  }, [socketStatus, load]);
 
   const names = {};
   for (const p of projects) names[String(p.id)] = p.name;

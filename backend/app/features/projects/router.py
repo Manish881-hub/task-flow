@@ -147,6 +147,12 @@ async def remove_member(
         str(project_id),
         {"type": "member_removed", "project_id": str(project_id), "user_id": str(user_id)},
     )
+    # Personal push so the removed member's own views (e.g. Assigned to me,
+    # whose tasks were just auto-unassigned) refresh live.
+    await manager.send_to_user(
+        str(user_id),
+        {"type": "member_removed", "project_id": str(project_id), "user_id": str(user_id)},
+    )
     return Response(status_code=204)
 
 

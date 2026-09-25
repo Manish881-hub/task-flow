@@ -101,7 +101,7 @@ async def create_task(project_id: str, body: TaskCreate, db: Session = Depends(g
     payload = {"type": "task_created", "project_id": str(project_id), "task": task_out(t)}
     await manager.broadcast_to_project(str(project_id), payload)
     if t.assignee_id:
-        await manager.send_to_user(str(t.assignee_id), {"type": "assigned_task_updated", **payload})
+        await manager.send_to_user(str(t.assignee_id), {**payload, "type": "assigned_task_updated"})
     return {"data": task_out(t)}
 
 
@@ -126,24 +126,50 @@ async def update_task(
     project_id: str, task_id: str, body: TaskUpdate, db: Session = Depends(get_db), user=Depends(get_current_user)
 ):
     data = {k: v for k, v in body.model_dump(exclude_unset=True).items()}
+    # Capture the previous assignee so an unassigned/reassigned user also gets
+    # a live push (req 24 works in every direction, not just on assignment).
+    old_assignee = None
+    try:
+        _old = repo.get_task(db, uuid.UUID(str(task_id)))
+        if _old is not None and str(_old.project_id) == str(project_id):
+            old_assignee = _old.assignee_id
+    except ValueError:
+        pass
     t = svc.update_task(db, project_id, task_id, user.id, data)
     from app.ws.manager import manager
 
     payload = {"type": "task_updated", "project_id": str(project_id), "task": task_out(t)}
     await manager.broadcast_to_project(str(project_id), payload)
+    notify = set()
     if t.assignee_id:
-        await manager.send_to_user(str(t.assignee_id), {"type": "assigned_task_updated", **payload})
+        notify.add(str(t.assignee_id))
+    if old_assignee is not None and (t.assignee_id is None or str(old_assignee) != str(t.assignee_id)):
+        notify.add(str(old_assignee))
+    for uid in notify:
+        await manager.send_to_user(uid, {**payload, "type": "assigned_task_updated"})
     return {"data": task_out(t)}
 
 
 @router.delete("/projects/{project_id}/tasks/{task_id}", status_code=204)
 async def delete_task(project_id: str, task_id: str, db: Session = Depends(get_db), user=Depends(get_current_user)):
+    old_assignee = None
+    try:
+        _old = repo.get_task(db, uuid.UUID(str(task_id)))
+        if _old is not None and str(_old.project_id) == str(project_id):
+            old_assignee = _old.assignee_id
+    except ValueError:
+        pass
     svc.delete_task(db, project_id, task_id, user.id)
     from app.ws.manager import manager
 
     await manager.broadcast_to_project(
         str(project_id), {"type": "task_deleted", "project_id": str(project_id), "task_id": str(task_id)}
     )
+    if old_assignee is not None:
+        await manager.send_to_user(
+            str(old_assignee),
+            {"type": "assigned_task_updated", "project_id": str(project_id), "task_id": str(task_id)},
+        )
     return Response(status_code=204)
 
 

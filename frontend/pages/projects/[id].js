@@ -152,6 +152,16 @@ function ProjectInner() {
     }
   }, [lastEvent?._receivedAt]); // eslint-disable-line react-hooks/exhaustive-deps
 
+  // Req 26: a dropped socket misses events — resync silently on reconnect.
+  const prevSocketStatus = useRef(socketStatus);
+  useEffect(() => {
+    if (prevSocketStatus.current === "Reconnecting" && socketStatus === "Live") {
+      refreshTasks();
+      loadBacklog(true);
+    }
+    prevSocketStatus.current = socketStatus;
+  }, [socketStatus, refreshTasks, loadBacklog]);
+
   const members = useMemo(() => {
     if (!project) return [];
     return project.members || project.project_members || [];
