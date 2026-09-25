@@ -363,6 +363,62 @@ def test_non_member_sweep_403(client):
         assert r.json()["error"]["code"] == "FORBIDDEN"
 
 
+def test_member_can_manage_tasks_but_not_membership(client):
+    """Req 8 positive proof: a plain member runs the task workflow end to end,
+    yet is denied every membership/ownership operation."""
+    signup(client, "Alice", "alice@example.com")
+    signup(client, "Bob", "bob@example.com")
+    signup(client, "Carol", "carol@example.com")
+    a = login(client, "alice@example.com")
+    b = login(client, "bob@example.com")
+    p = make_project(client, a["access_token"])
+    pid = p["id"]
+    r = client.post(
+        f"/api/v1/projects/{pid}/members",
+        json={"email": "bob@example.com", "role": "member"},
+        headers=authz(a["access_token"]),
+    )
+    assert r.status_code == 201, r.text
+    # Member creates a task.
+    r = client.post(
+        f"/api/v1/projects/{pid}/tasks", json={"title": "Member task"}, headers=authz(b["access_token"])
+    )
+    assert r.status_code == 201, r.text
+    tid = r.json()["data"]["id"]
+    # Member updates it.
+    r = client.patch(
+        f"/api/v1/projects/{pid}/tasks/{tid}",
+        json={"description": "edited by member"},
+        headers=authz(b["access_token"]),
+    )
+    assert r.status_code == 200, r.text
+    assert r.json()["data"]["description"] == "edited by member"
+    # Member comments on it.
+    r = client.post(
+        f"/api/v1/projects/{pid}/tasks/{tid}/comments",
+        json={"content": "member comment"},
+        headers=authz(b["access_token"]),
+    )
+    assert r.status_code == 201, r.text
+    # Member (as creator) deletes their own task.
+    r = client.delete(f"/api/v1/projects/{pid}/tasks/{tid}", headers=authz(b["access_token"]))
+    assert r.status_code == 204, r.text
+    # Same member is denied all membership/ownership operations.
+    r = client.post(
+        f"/api/v1/projects/{pid}/members",
+        json={"email": "carol@example.com"},
+        headers=authz(b["access_token"]),
+    )
+    assert r.status_code == 403, r.text
+    bob_me = client.get("/api/v1/auth/me", headers=authz(b["access_token"])).json()["data"]
+    r = client.delete(f"/api/v1/projects/{pid}/members/{bob_me['id']}", headers=authz(b["access_token"]))
+    assert r.status_code == 403, r.text
+    r = client.delete(f"/api/v1/projects/{pid}", headers=authz(b["access_token"]))
+    assert r.status_code == 403, r.text
+    r = client.patch(f"/api/v1/projects/{pid}", json={"name": "Hijack"}, headers=authz(b["access_token"]))
+    assert r.status_code == 403, r.text
+
+
 def test_pagination_and_filters(client):
     signup(client)
     a = login(client)
@@ -388,6 +444,117 @@ def test_pagination_and_filters(client):
     assert r.status_code == 201
     r = client.get(f"/api/v1/projects/{p['id']}/tasks/{tid}/comments", headers=authz(a["access_token"]))
     assert len(r.json()["data"]) == 1
+
+
+def test_remove_member_preserves_tasks(client):
+    """Req 9: removal revokes access but keeps the member's work intact."""
+    signup(client, "Alice", "alice@example.com")
+    signup(client, "Bob", "bob@example.com")
+    a = login(client, "alice@example.com")
+    b = login(client, "bob@example.com")
+    bob_me = client.get("/api/v1/auth/me", headers=authz(b["access_token"])).json()["data"]
+    p = make_project(client, a["access_token"])
+    pid = p["id"]
+    client.post(
+        f"/api/v1/projects/{pid}/members",
+        json={"email": "bob@example.com", "role": "member"},
+        headers=authz(a["access_token"]),
+    )
+    # Bob creates a task and comments on it.
+    r = client.post(
+        f"/api/v1/projects/{pid}/tasks", json={"title": "Bob's task"}, headers=authz(b["access_token"])
+    )
+    assert r.status_code == 201, r.text
+    tid = r.json()["data"]["id"]
+    r = client.post(
+        f"/api/v1/projects/{pid}/tasks/{tid}/comments",
+        json={"content": "bob was here"},
+        headers=authz(b["access_token"]),
+    )
+    assert r.status_code == 201, r.text
+    # Alice assigns a second task to Bob.
+    r = client.post(
+        f"/api/v1/projects/{pid}/tasks",
+        json={"title": "Assigned to Bob", "assignee_id": bob_me["id"]},
+        headers=authz(a["access_token"]),
+    )
+    assert r.status_code == 201, r.text
+    tid2 = r.json()["data"]["id"]
+    # Owner removes Bob.
+    r = client.delete(f"/api/v1/projects/{pid}/members/{bob_me['id']}", headers=authz(a["access_token"]))
+    assert r.status_code == 204, r.text
+    # Bob's task survives with authorship intact.
+    r = client.get(f"/api/v1/projects/{pid}/tasks/{tid}", headers=authz(a["access_token"]))
+    assert r.status_code == 200, r.text
+    assert r.json()["data"]["created_by"] == bob_me["id"]
+    # Bob's assignment is cleared, task itself remains.
+    r = client.get(f"/api/v1/projects/{pid}/tasks/{tid2}", headers=authz(a["access_token"]))
+    assert r.status_code == 200, r.text
+    assert r.json()["data"]["assignee_id"] is None
+    # Bob's comment survives.
+    r = client.get(f"/api/v1/projects/{pid}/tasks/{tid}/comments", headers=authz(a["access_token"]))
+    assert r.status_code == 200, r.text
+    assert any(c["content"] == "bob was here" for c in r.json()["data"])
+    # Bob is gone from members and locked out everywhere.
+    r = client.get(f"/api/v1/projects/{pid}", headers=authz(a["access_token"]))
+    assert all(m["user_id"] != bob_me["id"] for m in r.json()["data"]["members"])
+    for method, path, body in [
+        ("get", f"/api/v1/projects/{pid}", None),
+        ("get", f"/api/v1/projects/{pid}/tasks", None),
+        ("get", f"/api/v1/projects/{pid}/tasks/{tid}/comments", None),
+        ("get", f"/api/v1/projects/{pid}/activity", None),
+    ]:
+        r = client.request(method, path, json=body, headers=authz(b["access_token"]))
+        assert r.status_code == 403, (method, path, r.text)
+
+
+def test_delete_project_cascades_cleanly(client):
+    """Req 9: deleting a project leaves no orphaned rows behind."""
+    from app.db import session as dbsession
+    from app.db.models import ActivityLog, Comment, Project, ProjectMember, Task
+
+    signup(client, "Alice", "alice@example.com")
+    signup(client, "Bob", "bob@example.com")
+    a = login(client, "alice@example.com")
+    b = login(client, "bob@example.com")
+    p = make_project(client, a["access_token"])
+    pid = p["id"]
+    client.post(
+        f"/api/v1/projects/{pid}/members",
+        json={"email": "bob@example.com", "role": "member"},
+        headers=authz(a["access_token"]),
+    )
+    r = client.post(
+        f"/api/v1/projects/{pid}/tasks", json={"title": "Doomed"}, headers=authz(b["access_token"])
+    )
+    assert r.status_code == 201, r.text
+    tid = r.json()["data"]["id"]
+    r = client.post(
+        f"/api/v1/projects/{pid}/tasks/{tid}/comments",
+        json={"content": "doomed comment"},
+        headers=authz(a["access_token"]),
+    )
+    assert r.status_code == 201, r.text
+    # Owner deletes the project.
+    r = client.delete(f"/api/v1/projects/{pid}", headers=authz(a["access_token"]))
+    assert r.status_code == 204, r.text
+    # API surface reports everything gone.
+    assert client.get(f"/api/v1/projects/{pid}", headers=authz(a["access_token"])).status_code == 404
+    assert client.get(f"/api/v1/projects/{pid}/tasks", headers=authz(a["access_token"])).status_code == 404
+    assert client.get(f"/api/v1/projects/{pid}/activity", headers=authz(a["access_token"])).status_code == 404
+    # No orphaned rows at the storage seam.
+    db = dbsession.SessionLocal()
+    try:
+        import uuid as _uuid
+
+        puid = _uuid.UUID(pid)
+        assert db.get(Project, puid) is None
+        assert db.query(ProjectMember).filter(ProjectMember.project_id == puid).count() == 0
+        assert db.query(Task).filter(Task.project_id == puid).count() == 0
+        assert db.query(Comment).join(Task, Comment.task_id == Task.id).filter(Task.project_id == puid).count() == 0
+        assert db.query(ActivityLog).filter(ActivityLog.project_id == puid).count() == 0
+    finally:
+        db.close()
 
 
 def test_health_ready(client):
