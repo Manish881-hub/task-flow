@@ -692,6 +692,94 @@ def test_task_validation_and_derived_fields(client):
     assert r.status_code == 422, r.text
 
 
+def test_cross_user_assign_comments_done(client):
+    """Req 18-20: assignment surfaces cross-project, comments carry author+time
+    for every member, and only assignee/owner can mark Done."""
+    signup(client, "Alice", "alice@example.com")
+    signup(client, "Bob", "bob@example.com")
+    signup(client, "Carol", "carol@example.com")
+    a = login(client, "alice@example.com")
+    b = login(client, "bob@example.com")
+    c = login(client, "carol@example.com")
+    bob_id = client.get("/api/v1/auth/me", headers=authz(b["access_token"])).json()["data"]["id"]
+    p1 = make_project(client, a["access_token"], "P1")
+    p2 = make_project(client, a["access_token"], "P2")
+    for pid in (p1["id"], p2["id"]):
+        r = client.post(
+            f"/api/v1/projects/{pid}/members",
+            json={"email": "bob@example.com", "role": "member"},
+            headers=authz(a["access_token"]),
+        )
+        assert r.status_code == 201, r.text
+    # Req 18: owner assigns Bob tasks in BOTH projects; both surface in /assigned.
+    tids = []
+    for pid, title in ((p1["id"], "P1 job"), (p2["id"], "P2 job")):
+        r = client.post(
+            f"/api/v1/projects/{pid}/tasks",
+            json={"title": title, "assignee_id": bob_id},
+            headers=authz(a["access_token"]),
+        )
+        assert r.status_code == 201, r.text
+        tids.append((pid, r.json()["data"]["id"]))
+    r = client.get("/api/v1/assigned?per_page=100", headers=authz(b["access_token"]))
+    assert r.status_code == 200, r.text
+    seen = {t["title"] for t in r.json()["data"]}
+    assert {"P1 job", "P2 job"} <= seen, seen
+    # Carol (outsider to both) sees neither.
+    r = client.get("/api/v1/assigned?per_page=100", headers=authz(c["access_token"]))
+    assert r.status_code == 200, r.text
+    assert r.json()["data"] == []
+    # Cross-project assignment is blocked: Carol isn't in P1.
+    carol_id = client.get("/api/v1/auth/me", headers=authz(c["access_token"])).json()["data"]["id"]
+    r = client.post(
+        f"/api/v1/projects/{p1['id']}/tasks",
+        json={"title": "X", "assignee_id": carol_id},
+        headers=authz(a["access_token"]),
+    )
+    assert r.status_code == 422, r.text
+    # Req 19: Alice comments; Bob (member) sees author name + timestamp.
+    pid1, tid1 = tids[0]
+    r = client.post(
+        f"/api/v1/projects/{pid1}/tasks/{tid1}/comments",
+        json={"content": "starting now"},
+        headers=authz(a["access_token"]),
+    )
+    assert r.status_code == 201, r.text
+    assert r.json()["data"]["user_name"] == "Alice"
+    r = client.get(f"/api/v1/projects/{pid1}/tasks/{tid1}/comments", headers=authz(b["access_token"]))
+    assert r.status_code == 200, r.text
+    comments = r.json()["data"]
+    assert len(comments) == 1
+    assert comments[0]["user_name"] == "Alice" and comments[0]["created_at"] is not None
+    # Req 20: Bob (assignee) marks Done; Carol (outsider) 401/403s; a fellow
+    # member who is NOT the assignee gets a clear 403.
+    signup(client, "Dave", "dave@example.com")
+    d = login(client, "dave@example.com")
+    client.post(
+        f"/api/v1/projects/{pid1}/members",
+        json={"email": "dave@example.com", "role": "member"},
+        headers=authz(a["access_token"]),
+    )
+    r = client.patch(
+        f"/api/v1/projects/{pid1}/tasks/{tid1}", json={"status": "Done"}, headers=authz(d["access_token"])
+    )
+    assert r.status_code == 403, r.text
+    assert "Done" in r.json()["error"]["message"]
+    r = client.patch(
+        f"/api/v1/projects/{pid1}/tasks/{tid1}", json={"status": "Done"}, headers=authz(b["access_token"])
+    )
+    assert r.status_code == 200, r.text
+    assert r.json()["data"]["completed_at"] is not None
+    # Req 18 tail: after Bob's removal his assigned view empties (auto-unassign).
+    r = client.delete(f"/api/v1/projects/{p1['id']}/members/{bob_id}", headers=authz(a["access_token"]))
+    assert r.status_code == 204, r.text
+    r = client.delete(f"/api/v1/projects/{p2['id']}/members/{bob_id}", headers=authz(a["access_token"]))
+    assert r.status_code == 204, r.text
+    r = client.get("/api/v1/assigned?per_page=100", headers=authz(b["access_token"]))
+    assert r.status_code == 200, r.text
+    assert r.json()["data"] == []
+
+
 def test_health_ready(client):
     assert client.get("/health").json() == {"status": "ok"}
     r = client.get("/ready")
