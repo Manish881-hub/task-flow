@@ -567,7 +567,7 @@ button.tuf-btn-secondary-lg {
   bottom: -360px;
   transform: translateX(-50%);
   z-index: 10;
-  width: min(1080px, 88vw);
+  width: min(1020px, 86vw);
   border: 1px solid rgba(20, 35, 60, 0.14);
   border-radius: 18px;
   overflow: hidden;
@@ -1417,6 +1417,57 @@ button.tuf-btn-secondary-lg {
   color: var(--tuf-slate-600);
 }
 
+/* Smooth accordion open/close (~300ms height + fade). The wrap is always
+   rendered; the grid 0fr→1fr trick animates height without JS measurement. */
+.tuf-faq-answer-wrap {
+  display: grid;
+  grid-template-rows: 0fr;
+  opacity: 0;
+  visibility: hidden;
+  transition:
+    grid-template-rows 300ms ease,
+    opacity 300ms ease,
+    visibility 300ms ease;
+}
+.tuf-faq-answer-wrap.is-open {
+  grid-template-rows: 1fr;
+  opacity: 1;
+  visibility: visible;
+}
+.tuf-faq-answer-wrap > .tuf-faq-answer {
+  overflow: hidden;
+  min-height: 0;
+}
+
+/* ==========================================================================
+   Scroll reveal — subtle viewport-based appearance for major landing blocks.
+   Hero + dashboard preview stay static. Triggered once via IntersectionObserver
+   (see components/landing/Reveal.js). Transform/opacity only: no layout shift,
+   no horizontal overflow.
+   ========================================================================== */
+[data-reveal] {
+  opacity: 0;
+  transform: translateY(24px);
+  transition:
+    opacity 650ms ease,
+    transform 650ms ease;
+  will-change: opacity, transform;
+}
+[data-reveal].is-visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+@media (prefers-reduced-motion: reduce) {
+  [data-reveal] {
+    opacity: 1;
+    transform: none;
+    transition: none;
+  }
+  .tuf-faq-answer-wrap {
+    transition: none;
+  }
+}
+
 /* ==========================================================================
    CTA Banner Section
    ========================================================================== */
@@ -1608,14 +1659,14 @@ button.tuf-btn-secondary-lg {
 .tuf-footer-watermark {
   position: absolute;
   left: 50%;
-  bottom: -18px;
+  bottom: -6px;
   transform: translateX(-50%);
   z-index: 0;
-  font-size: clamp(110px, 13vw, 180px);
+  font-size: clamp(120px, 14vw, 180px);
   font-weight: 700;
   letter-spacing: -0.06em;
   color: #eaf1ff;
-  opacity: 0.42;
+  opacity: 0.3;
   white-space: nowrap;
   pointer-events: none;
   user-select: none;

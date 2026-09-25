@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { useReveal } from "./Reveal";
 
 const TESTIMONIALS = [
   {
@@ -25,10 +26,11 @@ const TESTIMONIALS = [
 ];
 
 export default function TestimonialsSection() {
+  const revealRef = useReveal();
   return (
-    <section className="tuf-testimonials-section" id="testimonials">
+    <section className="tuf-testimonials-section" id="testimonials" ref={revealRef}>
       <div className="tuf-container">
-        <div className="tuf-testimonials-header">
+        <div className="tuf-testimonials-header" data-reveal>
           <div>
             <div className="tuf-section-tag">
               <span className="tuf-section-tag-dot" />
@@ -54,7 +56,12 @@ export default function TestimonialsSection() {
 
         <div className="tuf-testimonials-grid">
           {TESTIMONIALS.map((t, idx) => (
-            <div key={idx} className="tuf-testimonial-card">
+            <div
+              key={idx}
+              className="tuf-testimonial-card"
+              data-reveal
+              data-reveal-delay={String(idx * 100)}
+            >
               <p className="tuf-testimonial-quote">“{t.quote}”</p>
               <div className="tuf-testimonial-author">
                 <div className="tuf-author-avatar">{t.initials}</div>

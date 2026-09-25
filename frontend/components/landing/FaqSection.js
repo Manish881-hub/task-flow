@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useReveal } from "./Reveal";
 
 const FAQ_ITEMS = [
   {
@@ -35,17 +36,18 @@ const FAQ_ITEMS = [
 
 export default function FaqSection() {
   const [openIndex, setOpenIndex] = useState(0); // first item open by default
+  const revealRef = useReveal();
 
   const toggle = (idx) => {
     setOpenIndex((prev) => (prev === idx ? null : idx));
   };
 
   return (
-    <section className="tuf-faq-section" id="faq">
+    <section className="tuf-faq-section" id="faq" ref={revealRef}>
       <div className="tuf-container">
         <div className="tuf-faq-grid">
           {/* Left Column */}
-          <div className="tuf-faq-left">
+          <div className="tuf-faq-left" data-reveal>
             <div className="tuf-section-tag">
               <span className="tuf-section-tag-dot" />
               <span>FAQ</span>
@@ -62,7 +64,7 @@ export default function FaqSection() {
           </div>
 
           {/* Right Column: Accordion */}
-          <div className="tuf-faq-list">
+          <div className="tuf-faq-list" data-reveal data-reveal-delay="120">
             {FAQ_ITEMS.map((item, idx) => {
               const isOpen = openIndex === idx;
               return (
@@ -76,7 +78,9 @@ export default function FaqSection() {
                     <span>{item.question}</span>
                     <span className="tuf-faq-icon">{isOpen ? "×" : "+"}</span>
                   </button>
-                  {isOpen && <div className="tuf-faq-answer">{item.answer}</div>}
+                  <div className={`tuf-faq-answer-wrap${isOpen ? " is-open" : ""}`}>
+                    <div className="tuf-faq-answer">{item.answer}</div>
+                  </div>
                 </div>
               );
             })}

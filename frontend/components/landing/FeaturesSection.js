@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { useState } from "react";
+import { useReveal } from "./Reveal";
 
 const TAB_DATA = {
   boards: {
@@ -96,6 +97,7 @@ export default function FeaturesSection() {
   const [activeTab, setActiveTab] = useState("boards");
   const [activeLang, setActiveLang] = useState("python");
   const [copied, setCopied] = useState(false);
+  const revealRef = useReveal();
 
   const currentTab = TAB_DATA[activeTab];
 
@@ -108,21 +110,21 @@ export default function FeaturesSection() {
   };
 
   return (
-    <section className="tuf-features-section" id="features">
+    <section className="tuf-features-section" id="features" ref={revealRef}>
       <div className="tuf-container">
-        <div className="tuf-section-tag">
+        <div className="tuf-section-tag" data-reveal>
           <span className="tuf-section-tag-dot" />
           <span>Core platform</span>
         </div>
 
-        <h2 className="tuf-section-title">
+        <h2 className="tuf-section-title" data-reveal data-reveal-delay="80">
           One Workspace.
           <br />
           Ship Every Sprint.
         </h2>
 
         {/* Segmented Tabs */}
-        <div className="tuf-tab-bar" role="tablist">
+        <div className="tuf-tab-bar" role="tablist" data-reveal data-reveal-delay="140">
           <button
             type="button"
             role="tab"
@@ -162,7 +164,7 @@ export default function FeaturesSection() {
         </div>
 
         {/* Feature Grid Card */}
-        <div className="tuf-feature-card-grid">
+        <div className="tuf-feature-card-grid" data-reveal>
           {/* Left Column: Details */}
           <div className="tuf-feature-left">
             <h3>{currentTab.title}</h3>
@@ -187,8 +189,8 @@ export default function FeaturesSection() {
             </div>
           </div>
 
-          {/* Right Column: Code Editor Mockup */}
-          <div className="tuf-code-box-wrap">
+          {/* Right Column: Code Editor Mockup — enters slightly after left text */}
+          <div className="tuf-code-box-wrap" data-reveal data-reveal-delay="120">
             <div className="tuf-code-card">
               <div className="tuf-code-topbar">
                 <div className="tuf-code-lang-tabs">

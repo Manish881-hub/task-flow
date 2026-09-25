@@ -1,8 +1,10 @@
 import { useState } from "react";
+import { useReveal } from "./Reveal";
 
 export default function CtaBanner() {
   const [email, setEmail] = useState("");
   const [submitted, setSubmitted] = useState(false);
+  const revealRef = useReveal();
 
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -14,9 +16,9 @@ export default function CtaBanner() {
   };
 
   return (
-    <section className="tuf-cta-section">
+    <section className="tuf-cta-section" ref={revealRef}>
       <div className="tuf-container">
-        <div className="tuf-cta-card">
+        <div className="tuf-cta-card" data-reveal>
           <h2 className="tuf-cta-title">Ship your next sprint together</h2>
           <p className="tuf-cta-desc">
             Start a project, invite your team, and see your first board update live in under a minute.
