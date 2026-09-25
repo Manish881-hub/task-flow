@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { useReveal } from "./Reveal";
+import ScrollTextReveal from "./ScrollTextReveal";
 
 const TESTIMONIALS = [
   {
@@ -36,11 +37,11 @@ export default function TestimonialsSection() {
               <span className="tuf-section-tag-dot" />
               <span>Testimonials</span>
             </div>
-            <h2 className="tuf-section-title">
-              Built for teams
-              <br />
-              that ship together
-            </h2>
+            {/* Parent header keeps the fade-up; heading scrubs word color only. */}
+            <ScrollTextReveal
+              text={"Built for teams\nthat ship together"}
+              className="tuf-section-title"
+            />
           </div>
 
           <div className="tuf-testimonials-right">

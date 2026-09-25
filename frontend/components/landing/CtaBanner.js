@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useReveal } from "./Reveal";
+import ScrollTextReveal from "./ScrollTextReveal";
 
 export default function CtaBanner() {
   const [email, setEmail] = useState("");
@@ -19,7 +20,11 @@ export default function CtaBanner() {
     <section className="tuf-cta-section" ref={revealRef}>
       <div className="tuf-container">
         <div className="tuf-cta-card" data-reveal>
-          <h2 className="tuf-cta-title">Ship your next sprint together</h2>
+          {/* Card keeps the fade-up; heading scrubs word color only. */}
+          <ScrollTextReveal
+            text="Ship your next sprint together"
+            className="tuf-cta-title"
+          />
           <p className="tuf-cta-desc">
             Start a project, invite your team, and see your first board update live in under a minute.
           </p>

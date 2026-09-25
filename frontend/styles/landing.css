@@ -1466,6 +1466,23 @@ button.tuf-btn-secondary-lg {
   .tuf-faq-answer-wrap {
     transition: none;
   }
+  /* ScrollTextReveal: static final color, no scrubbing. */
+  .scroll-text-reveal .str-word {
+    color: #142033 !important;
+  }
+}
+
+/* ==========================================================================
+   ScrollTextReveal — scroll-linked word color (Framer-style, native APIs).
+   Typography inherits from .tuf-section-title / .tuf-cta-title; only color
+   is scrubbed per word via JS. Inline spans => no layout shift.
+   ========================================================================== */
+.scroll-text-reveal {
+  text-wrap: balance;
+}
+.scroll-text-reveal .str-word {
+  display: inline;
+  will-change: color;
 }
 
 /* ==========================================================================

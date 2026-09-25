@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { useState } from "react";
 import { useReveal } from "./Reveal";
+import ScrollTextReveal from "./ScrollTextReveal";
 
 const TAB_DATA = {
   boards: {
@@ -117,11 +118,12 @@ export default function FeaturesSection() {
           <span>Core platform</span>
         </div>
 
-        <h2 className="tuf-section-title" data-reveal data-reveal-delay="80">
-          One Workspace.
-          <br />
-          Ship Every Sprint.
-        </h2>
+        {/* Scroll-linked word reveal (no data-reveal here: color scrub only,
+            avoids nested opacity/transform conflicts with Reveal.js). */}
+        <ScrollTextReveal
+          text={"One Workspace.\nShip Every Sprint."}
+          className="tuf-section-title"
+        />
 
         {/* Segmented Tabs */}
         <div className="tuf-tab-bar" role="tablist" data-reveal data-reveal-delay="140">
