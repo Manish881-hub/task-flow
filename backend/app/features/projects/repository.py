@@ -42,9 +42,11 @@ def get_project(db: Session, project_id: uuid.UUID) -> Project | None:
 
 
 def create_project(db: Session, name: str, description: str, owner_id: uuid.UUID) -> Project:
+    # Flush only: the service commits the whole unit of work once, so a crash
+    # can never leave a project without its owner membership.
     p = Project(name=name, description=description or "", owner_id=owner_id)
     db.add(p)
-    db.commit()
+    db.flush()
     db.refresh(p)
     return p
 
@@ -77,29 +79,31 @@ def list_members(db: Session, project_id: uuid.UUID) -> list[ProjectMember]:
 
 
 def add_member(db: Session, project_id: uuid.UUID, user_id: uuid.UUID, role: str) -> ProjectMember:
+    # Flush only — see create_project.
     m = ProjectMember(project_id=project_id, user_id=user_id, role=role)
     db.add(m)
-    db.commit()
+    db.flush()
     db.refresh(m)
     return m
 
 
 def remove_member(db: Session, m: ProjectMember) -> None:
+    # No commit: part of the service-level transaction.
     db.delete(m)
-    db.commit()
 
 
 def clear_assignee(db: Session, project_id: uuid.UUID, user_id: uuid.UUID) -> None:
+    # UPDATE executes immediately inside the transaction; no commit here.
     db.query(Task).filter(Task.project_id == project_id, Task.assignee_id == user_id).update(
         {Task.assignee_id: None}, synchronize_session=False
     )
-    db.commit()
 
 
 def log_activity(db: Session, project_id: uuid.UUID, user_id: uuid.UUID, event_type: str, description: str) -> ActivityLog:
+    # Flush only — see create_project.
     row = ActivityLog(project_id=project_id, user_id=user_id, event_type=event_type, description=description)
     db.add(row)
-    db.commit()
+    db.flush()
     db.refresh(row)
     return row
 

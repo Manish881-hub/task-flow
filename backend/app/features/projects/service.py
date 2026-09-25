@@ -31,9 +31,16 @@ def require_owner(db: Session, project_id: uuid.UUID, user_id: uuid.UUID):
 
 
 def create_project(db: Session, user_id: uuid.UUID, name: str, description: str):
-    p = repo.create_project(db, name, description, user_id)
-    repo.add_member(db, p.id, user_id, "owner")
-    repo.log_activity(db, p.id, user_id, "project_created", f"Project '{name}' created")
+    # One transaction: validate nothing (creation has no preconditions), mutate
+    # everything, commit once — a project is never left without its owner.
+    try:
+        p = repo.create_project(db, name, description, user_id)
+        repo.add_member(db, p.id, user_id, "owner")
+        repo.log_activity(db, p.id, user_id, "project_created", f"Project '{name}' created")
+        db.commit()
+    except Exception:
+        db.rollback()
+        raise
     return p
 
 
@@ -50,8 +57,13 @@ def invite_member(db: Session, project_id: str, inviter_id: uuid.UUID, email: st
         raise NotFoundError("User")
     if repo.get_membership(db, pid, user.id):
         raise ValidationError("User already a member")
-    m = repo.add_member(db, pid, user.id, role)
-    repo.log_activity(db, pid, inviter_id, "member_invited", f"{user.email} invited as {role}")
+    try:
+        m = repo.add_member(db, pid, user.id, role)
+        repo.log_activity(db, pid, inviter_id, "member_invited", f"{user.email} invited as {role}")
+        db.commit()
+    except Exception:
+        db.rollback()
+        raise
     return user, m
 
 
@@ -70,6 +82,13 @@ def remove_member(db: Session, project_id: str, actor_id: uuid.UUID, target_user
         raise NotFoundError("Member")
     if m.role == "owner":
         raise ValidationError("Cannot remove owner")
-    repo.clear_assignee(db, pid, tid)
-    repo.remove_member(db, m)
-    repo.log_activity(db, pid, actor_id, "member_removed", f"Member {target_user_id} removed")
+    # One transaction: unassign + remove + audit together, so a crash can
+    # never leave "assignee cleared but still a member" (or the reverse).
+    try:
+        repo.clear_assignee(db, pid, tid)
+        repo.remove_member(db, m)
+        repo.log_activity(db, pid, actor_id, "member_removed", f"Member {target_user_id} removed")
+        db.commit()
+    except Exception:
+        db.rollback()
+        raise
