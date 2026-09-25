@@ -2,6 +2,7 @@ import Head from "next/head";
 import { useRouter } from "next/router";
 import { useEffect } from "react";
 import { useAuth } from "../lib/auth";
+import useLandingScrollReset from "../hooks/useLandingScrollReset";
 import LandingNavbar from "../components/landing/LandingNavbar";
 import HeroSection from "../components/landing/HeroSection";
 import FeaturesSection from "../components/landing/FeaturesSection";
@@ -13,6 +14,9 @@ import LandingFooter from "../components/landing/LandingFooter";
 export default function Home() {
   const { user, authReady } = useAuth();
   const router = useRouter();
+
+  // Landing only: defeat browser scroll restoration so refresh starts at hero.
+  useLandingScrollReset();
 
   useEffect(() => {
     if (authReady && user) router.replace("/dashboard");
