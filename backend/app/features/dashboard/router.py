@@ -9,7 +9,7 @@ from sqlalchemy.orm import Session
 
 from app.core.deps import get_current_user
 from app.db.base import ensure_aware
-from app.db.models import ActivityLog, Project, ProjectMember, Task
+from app.db.models import ActivityLog, Project, ProjectMember, Task, User
 from app.db.session import get_db
 
 router = APIRouter(prefix="/api/v1/dashboard", tags=["dashboard"])
@@ -26,6 +26,10 @@ def dashboard(db: Session = Depends(get_db), user=Depends(get_current_user)):
     now = datetime.now(timezone.utc)
     today = now.date()
     week_ago = now - timedelta(days=7)
+    # Semantics (req 27): "tasks they completed this week" = assigned-to-me
+    # tasks currently Done with completed_at inside the last 7 days — the
+    # personal-productivity reading, consistent with assigned_to_me above.
+    # It deliberately does NOT count tasks the user marked Done for others.
     for t in my_tasks:
         if t.status in by_status:
             by_status[t.status] += 1
@@ -63,6 +67,10 @@ def dashboard(db: Session = Depends(get_db), user=Depends(get_current_user)):
                 "open_tasks": int(open_counts.get(p.id, 0)),
             }
         )
+    # Semantics (req 27): the "personal" feed covers every project the user
+    # can access (not just their own actions) — the point is catching up on
+    # what the team did across your projects. Membership scoping above keeps
+    # other users' projects out.
     recent = []
     if pids:
         recent = (
@@ -72,6 +80,13 @@ def dashboard(db: Session = Depends(get_db), user=Depends(get_current_user)):
             .limit(10)
             .all()
         )
+    # Resolve author names (same as the project feed) so the dashboard feed
+    # shows who acted instead of falling back to "Someone".
+    names: dict = {}
+    rids = {r.user_id for r in recent}
+    if rids:
+        for u in db.query(User).filter(User.id.in_(rids)).all():
+            names[u.id] = u.name
     return {
         "data": {
             "project_count": len(pids),
@@ -86,6 +101,7 @@ def dashboard(db: Session = Depends(get_db), user=Depends(get_current_user)):
                     "id": str(r.id),
                     "project_id": str(r.project_id),
                     "user_id": str(r.user_id),
+                    "user_name": names.get(r.user_id),
                     "event_type": r.event_type,
                     "description": r.description,
                     "created_at": r.created_at,

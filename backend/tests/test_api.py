@@ -780,6 +780,71 @@ def test_cross_user_assign_comments_done(client):
     assert r.json()["data"] == []
 
 
+def test_dashboard_personal_numbers(client):
+    """Req 27: project count, assigned-by-status, week completions, busiest
+    project, and a named reverse-chron feed — with zero cross-user leakage."""
+    import json
+
+    signup(client, "Alice", "alice@example.com")
+    signup(client, "Bob", "bob@example.com")
+    signup(client, "Carol", "carol@example.com")
+    a = login(client, "alice@example.com")
+    b = login(client, "bob@example.com")
+    c = login(client, "carol@example.com")
+    bob_id = client.get("/api/v1/auth/me", headers=authz(b["access_token"])).json()["data"]["id"]
+    p1 = make_project(client, a["access_token"], "P1")
+    p2 = make_project(client, a["access_token"], "P2")
+    pc = make_project(client, c["access_token"], "PC")
+    client.post(
+        f"/api/v1/projects/{p1['id']}/members",
+        json={"email": "bob@example.com", "role": "member"},
+        headers=authz(a["access_token"]),
+    )
+    client.post(f"/api/v1/projects/{pc['id']}/tasks", json={"title": "TC"}, headers=authz(c["access_token"]))
+    # P1: one task assigned to Bob, one Alice completes herself this week.
+    r = client.post(
+        f"/api/v1/projects/{p1['id']}/tasks", json={"title": "T1", "assignee_id": bob_id},
+        headers=authz(a["access_token"]),
+    )
+    assert r.status_code == 201, r.text
+    r = client.post(
+        f"/api/v1/projects/{p1['id']}/tasks", json={"title": "T2", "assignee_id": a["user"]["id"]},
+        headers=authz(a["access_token"]),
+    )
+    tid2 = r.json()["data"]["id"]
+    r = client.patch(f"/api/v1/projects/{p1['id']}/tasks/{tid2}", json={"status": "Done"}, headers=authz(a["access_token"]))
+    assert r.status_code == 200, r.text
+    # P2: two open tasks → busiest project.
+    for title in ("T3", "T4"):
+        r = client.post(f"/api/v1/projects/{p2['id']}/tasks", json={"title": title}, headers=authz(a["access_token"]))
+        assert r.status_code == 201, r.text
+
+    d = client.get("/api/v1/dashboard", headers=authz(a["access_token"])).json()["data"]
+    assert d["project_count"] == 2
+    assert d["assigned_to_me"] == {"To Do": 0, "In Progress": 0, "Done": 1}
+    assert d["assigned_total"] == 1
+    assert d["completed_this_week"] == 1
+    assert d["busiest_project"]["project_name"] == "P2"
+    assert d["busiest_project"]["open_tasks"] == 2
+    counts = {p["project_name"]: (p["task_count"], p["open_tasks"]) for p in d["per_project"]}
+    assert counts == {"P1": (2, 1), "P2": (2, 2)}, counts
+    feed = d["recent_activity"]
+    assert 0 < len(feed) <= 10
+    times = [f["created_at"] for f in feed]
+    assert times == sorted(times, reverse=True), "feed must be reverse-chronological"
+    assert all(f["user_name"] in ("Alice", "Bob") for f in feed), feed
+    blob = json.dumps(d)
+    assert "PC" not in blob and "TC" not in blob and "Carol" not in blob
+    # Bob sees only his slice; a brand-new user sees an empty dashboard.
+    db = client.get("/api/v1/dashboard", headers=authz(b["access_token"])).json()["data"]
+    assert db["project_count"] == 1 and db["assigned_total"] == 1
+    signup(client, "Zed", "zed@example.com")
+    z = login(client, "zed@example.com")
+    dz = client.get("/api/v1/dashboard", headers=authz(z["access_token"])).json()["data"]
+    assert dz["project_count"] == 0 and dz["assigned_total"] == 0
+    assert dz["busiest_project"] is None and dz["recent_activity"] == []
+
+
 def test_health_ready(client):
     assert client.get("/health").json() == {"status": "ok"}
     r = client.get("/ready")

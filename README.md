@@ -121,7 +121,7 @@ activity_log: id project_id->projects user_id->users event_type description crea
 | `GET/PATCH /projects/{id}/tasks/{tid}` | member | **only assignee or owner can set Done** (403 else); `completed_at` auto set/cleared |
 | `DELETE /projects/{id}/tasks/{tid}` | owner/creator | 204 |
 | `GET/POST /projects/{id}/tasks/{tid}/comments` | member | content 1–2000 |
-| `GET /dashboard` | Bearer | assigned counts by status, overdue, per-project counts, recent activity(10) |
+| `GET /dashboard` | Bearer | assigned counts by status, overdue, per-project counts, recent activity(10); `completed_this_week` = assigned-to-me tasks Done in last 7d; feed spans all accessible projects with author names |
 | `GET /assigned?status&page…` | Bearer | tasks assigned to me across projects |
 | `GET /health`, `GET /ready` | public | liveness + DB check |
 
@@ -129,7 +129,7 @@ Errors: `{error:{code,message,details}, request_id}`. Lists: `{data,meta:{total,
 
 ## Tests & verification
 
-- Backend: `cd backend && pytest` — **24 passed** (20 HTTP + 4 WS: handshake 4401s, member join vs non-member error, room isolation + assigned push, removal eviction; plus signup/login/me, password rules + name max 100, refresh rotation + reuse→all-sessions-revoked, expired-access 401→refresh→retry, non-member 403 sweep across project/task/comment/activity endpoints, member task-management vs membership-denial, remove-member preserves tasks, project-delete cascade with zero orphans, combined task filters + literal search + priority sorting + server-side pagination, task validation edges + Done/completed_at symmetry + removed-assignee block, cross-user assignment/comments/Done-rule proof, logout, SQLite naive-datetime, invite/permissions, Done rule + `completed_at`, due/assignee 422s, delete rule, pagination/filters/search, comments, health/ready, envelope shape).
+- Backend: `cd backend && pytest` — **25 passed** (21 HTTP + 4 WS: handshake 4401s, member join vs non-member error, room isolation + assigned push, removal eviction; plus signup/login/me, password rules + name max 100, refresh rotation + reuse→all-sessions-revoked, expired-access 401→refresh→retry, non-member 403 sweep across project/task/comment/activity endpoints, member task-management vs membership-denial, remove-member preserves tasks, project-delete cascade with zero orphans, combined task filters + literal search + priority sorting + server-side pagination, task validation edges + Done/completed_at symmetry + removed-assignee block, cross-user assignment/comments/Done-rule proof, dashboard personal numbers + named feed + isolation, logout, SQLite naive-datetime, invite/permissions, Done rule + `completed_at`, due/assignee 422s, delete rule, pagination/filters/search, comments, health/ready, envelope shape).
 - Frontend: `cd frontend && npm test` — **3 passed** (`node --test`, zero deps): expired token → automatic refresh → retry succeeds with exactly one `/refresh`; three concurrent 401s share one in-flight refresh; dead refresh → 401 with token cleared and no loop. `npm run build` clean.
 - Frontend: `cd frontend && npm run build` — clean (routes `/`, `/login`, `/signup`, `/dashboard`, `/assigned`, `/projects/[id]`).
 - Repo checks: `docker compose config` valid; no placeholder image URLs; no emojis (SVG icons); no hardcoded API URLs (env only); no `localStorage` tokens; CI in `.github/workflows/ci.yml` runs both suites.
