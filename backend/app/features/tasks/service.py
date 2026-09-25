@@ -27,7 +27,10 @@ def _check_due(due: datetime | None) -> None:
     assert aware is not None
     today = datetime.now(timezone.utc).date()
     if aware.date() < today:
-        raise ValidationError("due_date cannot be in the past")
+        raise ValidationError(
+            "due_date cannot be in the past",
+            details=[{"loc": ["body", "due_date"], "msg": "due_date cannot be in the past", "type": "value_error"}],
+        )
 
 
 def _check_assignee(db: Session, pid: uuid.UUID, assignee: str | None) -> uuid.UUID | None:
@@ -38,7 +41,10 @@ def _check_assignee(db: Session, pid: uuid.UUID, assignee: str | None) -> uuid.U
         ProjectMember.project_id == pid, ProjectMember.user_id == aid
     ).first()
     if m is None:
-        raise ValidationError("Assignee must be a project member")
+        raise ValidationError(
+            "Assignee must be a project member",
+            details=[{"loc": ["body", "assignee_id"], "msg": "Assignee must be a project member", "type": "value_error"}],
+        )
     return aid
 
 

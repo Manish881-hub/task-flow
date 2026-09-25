@@ -51,12 +51,18 @@ def invite_member(db: Session, project_id: str, inviter_id: uuid.UUID, email: st
         raise NotFoundError("Project")
     require_owner(db, pid, inviter_id)
     if role not in ("owner", "member"):
-        raise ValidationError("Invalid role")
+        raise ValidationError(
+            "Invalid role",
+            details=[{"loc": ["body", "role"], "msg": "Invalid role", "type": "value_error"}],
+        )
     user = repo.get_user_by_email(db, email)
     if user is None:
         raise NotFoundError("User")
     if repo.get_membership(db, pid, user.id):
-        raise ValidationError("User already a member")
+        raise ValidationError(
+            "User already a member",
+            details=[{"loc": ["body", "email"], "msg": "User already a member", "type": "value_error"}],
+        )
     try:
         m = repo.add_member(db, pid, user.id, role)
         repo.log_activity(db, pid, inviter_id, "member_invited", f"{user.email} invited as {role}")
@@ -81,7 +87,10 @@ def remove_member(db: Session, project_id: str, actor_id: uuid.UUID, target_user
     if m is None:
         raise NotFoundError("Member")
     if m.role == "owner":
-        raise ValidationError("Cannot remove owner")
+        raise ValidationError(
+            "Cannot remove owner",
+            details=[{"loc": ["path", "user_id"], "msg": "Cannot remove owner", "type": "value_error"}],
+        )
     # One transaction: unassign + remove + audit together, so a crash can
     # never leave "assignee cleared but still a member" (or the reverse).
     try:

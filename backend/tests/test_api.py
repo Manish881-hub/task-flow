@@ -624,6 +624,74 @@ def test_task_combined_filters_search_sort_pagination(client):
     assert len(set(ids1) | set(ids2) | set(ids3)) == 5
 
 
+def test_task_validation_and_derived_fields(client):
+    """Req 15-17: rejections are 422 with field detail (never crashes), Done
+    derives completed_at symmetrically, removed members can't be assigned."""
+    from datetime import timezone
+
+    signup(client, "Alice", "alice@example.com")
+    signup(client, "Bob", "bob@example.com")
+    a = login(client, "alice@example.com")
+    b = login(client, "bob@example.com")
+    bob_me = client.get("/api/v1/auth/me", headers=authz(b["access_token"])).json()["data"]
+    p = make_project(client, a["access_token"])
+    pid = p["id"]
+    client.post(
+        f"/api/v1/projects/{pid}/members",
+        json={"email": "bob@example.com", "role": "member"},
+        headers=authz(a["access_token"]),
+    )
+    base = f"/api/v1/projects/{pid}/tasks"
+
+    def must_422(method, path, body, field):
+        # Every 422 — schema or service raised — carries field-located details.
+        r = client.request(method, path, json=body, headers=authz(a["access_token"]))
+        assert r.status_code == 422, (method, path, body, r.text)
+        err = r.json()["error"]
+        assert err["code"] == "VALIDATION_ERROR", r.text
+        details = err.get("details") or []
+        assert details, (method, path, r.text)
+        locs = [str(d.get("loc")) for d in details if isinstance(d, dict)]
+        assert any(field in loc for loc in locs), (field, r.text)
+        return r
+
+    # Req 15: every invalid shape is a 422 naming its field.
+    must_422("post", base, {"title": ""}, "title")
+    must_422("post", base, {"title": "   "}, "title")
+    must_422("post", base, {"title": "x" * 201}, "title")
+    must_422("post", base, {"title": "T", "status": "done"}, "status")
+    must_422("post", base, {"title": "T", "priority": "Urgent"}, "priority")
+    must_422("post", base, {"title": "T", "due_date": "not-a-date"}, "due_date")
+    must_422("post", base, {"title": "T", "due_date": "2000-01-01T00:00:00Z"}, "due_date")
+    # Boundary: due today (UTC) is not "in the past".
+    today = datetime.now(timezone.utc).date().isoformat()
+    r = client.post(base, json={"title": "Today", "due_date": f"{today}T00:00:00Z"}, headers=authz(a["access_token"]))
+    assert r.status_code == 201, r.text
+    # Update-path validation mirrors creation.
+    r = client.post(base, json={"title": "T"}, headers=authz(a["access_token"]))
+    tid = r.json()["data"]["id"]
+    must_422("patch", f"{base}/{tid}", {"title": "  "}, "title")
+    # Explicit null title keeps the old value; unknown fields are ignored.
+    r = client.patch(f"{base}/{tid}", json={"title": None, "zzz": 1}, headers=authz(a["access_token"]))
+    assert r.status_code == 200, r.text
+    assert r.json()["data"]["title"] == "T"
+    # Req 16: create straight into Done stamps completed_at (assignee self).
+    r = client.post(
+        base, json={"title": "D", "status": "Done", "assignee_id": a["user"]["id"]},
+        headers=authz(a["access_token"]),
+    )
+    assert r.status_code == 201, r.text
+    assert r.json()["data"]["completed_at"] is not None
+    # Req 17: removed members are blocked on both assignment paths.
+    r = client.delete(f"/api/v1/projects/{pid}/members/{bob_me['id']}", headers=authz(a["access_token"]))
+    assert r.status_code == 204, r.text
+    r = client.post(base, json={"title": "T", "assignee_id": bob_me["id"]}, headers=authz(a["access_token"]))
+    assert r.status_code == 422, r.text
+    assert "member" in r.json()["error"]["message"].lower()
+    r = client.patch(f"{base}/{tid}", json={"assignee_id": bob_me["id"]}, headers=authz(a["access_token"]))
+    assert r.status_code == 422, r.text
+
+
 def test_health_ready(client):
     assert client.get("/health").json() == {"status": "ok"}
     r = client.get("/ready")
