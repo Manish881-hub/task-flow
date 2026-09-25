@@ -556,6 +556,12 @@ button.tuf-btn-secondary-lg {
 .tuf-hero-new-sub { font-size: 1.12rem; color: rgba(15,23,42,0.72); margin: 14px 0 0; text-shadow: 0 1px 8px rgba(255,255,255,0.85); max-width: 60ch; }
 .tuf-hero-new-ctas { display: flex; align-items: center; gap: 0.9rem; margin-top: 26px; flex-wrap: wrap; justify-content: center; }
 .tuf-hero-secondary { background: rgba(255,255,255,0.94) !important; border-color: #e2e8f0 !important; box-shadow: 0 2px 10px rgba(0,0,0,0.06); }
+/* Hero CTA sizing — BookDemoButton renders a <button>, which the global
+   `button.tuf-btn-secondary-lg { width: 100% }` rule stretches full-width
+   (meant for stacked menus). Scoped override: hero buttons size to content
+   and stay side-by-side. Navbar / mobile menu buttons untouched. */
+.tuf-hero-new-ctas > * { flex: 0 0 auto; width: auto; }
+.tuf-hero-new-ctas button.tuf-btn-secondary-lg { width: auto; min-width: 130px; }
 
 /* ------------------------------------------------------------------
    Dashboard preview — REAL screenshot floating over hero bottom
@@ -740,6 +746,10 @@ button.tuf-btn-secondary-lg {
       transparent 100%
     );
   }
+
+  /* mobile hero CTAs stack vertically */
+  .tuf-hero-new-ctas { flex-direction: column; width: 100%; }
+  .tuf-hero-new-ctas > * { width: min(100%, 240px); }
 
   /* reduce overlap on mobile: real dashboard short, keep ~80px gap above hero bottom */
   .dashboard-preview,
