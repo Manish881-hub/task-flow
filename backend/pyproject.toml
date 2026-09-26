@@ -1,0 +1,30 @@
+[project]
+name = "taskflow-backend"
+version = "1.0.0"
+description = "TaskFlow FastAPI backend (Vercel service root: backend/)"
+requires-python = ">=3.12"
+# Mirrors backend/requirements.txt so Vercel's Python builder (uv/pip) installs
+# the same deps whether it reads pyproject.toml or requirements.txt.
+# Deployment-only manifest: do not change app logic here.
+dependencies = [
+  "fastapi==0.115.6",
+  "uvicorn[standard]==0.34.0",
+  "sqlalchemy==2.0.54",
+  "alembic==1.14.0",
+  "psycopg2-binary==2.9.10",
+  "pydantic-settings==2.6.1",
+  "pyjwt==2.10.1",
+  "bcrypt==4.2.1",
+  "python-multipart==0.0.20",
+  "slowapi==0.1.9",
+  "email-validator==2.2.0",
+  "pytest==8.3.4",
+  "httpx==0.28.1",
+]
+
+[tool.vercel]
+# Explicit Python-runtime anchoring for the backend service.
+# Service root is backend/ (see vercel.json services.backend.root), so this
+# resolves to backend/main.py, which re-exports the real app from
+# backend/app/main.py (same object local `uvicorn app.main:app` serves).
+entrypoint = "main:app"
