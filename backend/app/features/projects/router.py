@@ -53,8 +53,17 @@ async def create_project(
     response.headers["Location"] = f"/api/v1/projects/{p.id}"
     from app.ws.manager import manager
 
+    # Room broadcast for members watching the board (unchanged; empty at
+    # creation time since nobody has joined the new room yet).
     await manager.broadcast_to_project(
         str(p.id), {"type": "activity", "event": "project_created", "project_id": str(p.id)}
+    )
+    # Personal push: the creator's sidebar owns its own project list and
+    # never joined the new room, so without this the new project is
+    # invisible until manual refresh. Reuses the per-user registry:
+    # no Redis, no global broadcast, no new connections.
+    await manager.send_to_user(
+        str(user.id), {"type": "project_created", "project_id": str(p.id)}
     )
     return {"data": project_out(p)}
 
@@ -127,8 +136,17 @@ async def invite_member(
     invited, _m = svc.invite_member(db, project_id, user.id, str(body.email), body.role)
     from app.ws.manager import manager
 
+    # Room broadcast for members already watching the board (unchanged).
     await manager.broadcast_to_project(
         str(project_id),
+        {"type": "member_invited", "project_id": str(project_id), "user_id": str(invited.id)},
+    )
+    # Personal push: the invited user is not in the room (their client does
+    # not know the project yet, so it never sent "join"). Without this, an
+    # invite is invisible until manual refresh. Reuses the per-user registry:
+    # no Redis, no global broadcast, no new connections.
+    await manager.send_to_user(
+        str(invited.id),
         {"type": "member_invited", "project_id": str(project_id), "user_id": str(invited.id)},
     )
     return {"data": {"user_id": str(invited.id), "email": invited.email, "role": body.role}}

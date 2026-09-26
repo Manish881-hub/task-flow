@@ -209,6 +209,137 @@ def test_ws_room_isolation_and_assigned_push(client):
         tc.join(timeout=10)
 
 
+def test_ws_invite_reaches_new_member_and_list_updates(client):
+    """Invite UX gap: a user who never joined the room still learns about the
+    invite personally; refetch then shows the project. Outsiders hear nothing.
+    Removal prunes the list again."""
+    an, ae = _uniq("Alice")
+    bn, be = _uniq("Bob")
+    cn, ce = _uniq("Carol")
+    signup(client, an, ae)
+    signup(client, bn, be)
+    signup(client, cn, ce)
+    a = login(client, ae)
+    b = login(client, be)
+    c = login(client, ce)
+    bob_id = me_id(client, b["access_token"])
+    p = client.post("/api/v1/projects", json={"name": "P"}, headers=authz(a["access_token"])).json()["data"]
+
+    stop = threading.Event()
+    qb, qc = queue.Queue(), queue.Queue()
+    boxb: dict = {}
+    boxc: dict = {}
+    # Bob connects but CANNOT join: his client does not know the project yet.
+    tb = threading.Thread(target=_listen, args=(client, b["access_token"], None, qb, stop, boxb), daemon=True)
+    tc = threading.Thread(target=_listen, args=(client, c["access_token"], None, qc, stop, boxc), daemon=True)
+    tb.start()
+    tc.start()
+    try:
+        # A. owner invites Bob → Bob gets a personal invite event (no room).
+        r = client.post(
+            f"/api/v1/projects/{p['id']}/members",
+            json={"email": be, "role": "member"},
+            headers=authz(a["access_token"]),
+        )
+        assert r.status_code == 201, r.text
+        msg = _next(qb)
+        assert msg["type"] == "member_invited", msg
+        assert msg["project_id"] == p["id"] and msg["user_id"] == bob_id, msg
+        # B. refetch (what the sidebar does on the event) now lists it.
+        r = client.get("/api/v1/projects?per_page=100", headers=authz(b["access_token"]))
+        assert r.status_code == 200, r.text
+        assert p["id"] in {pr["id"] for pr in r.json()["data"]}
+        # C. unrelated Carol hears nothing.
+        _none(qc)
+        # D. removal: Bob is told personally, then the project is gone for him.
+        r = client.delete(f"/api/v1/projects/{p['id']}/members/{bob_id}", headers=authz(a["access_token"]))
+        assert r.status_code == 204, r.text
+        msg = _next(qb)
+        assert msg["type"] == "member_removed", msg
+        r = client.get("/api/v1/projects?per_page=100", headers=authz(b["access_token"]))
+        assert p["id"] not in {pr["id"] for pr in r.json()["data"]}
+        r = client.get(f"/api/v1/projects/{p['id']}", headers=authz(b["access_token"]))
+        assert r.status_code == 403, r.text
+    finally:
+        stop.set()
+        _close_all(boxb, boxc)
+        tb.join(timeout=10)
+        tc.join(timeout=10)
+
+
+def test_ws_project_created_reaches_creator_only(client):
+    """Owner-create UX gap: the creator never joins the new room, so the
+    room broadcast reaches nobody; the personal project_created push is the
+    only live path to the creator's sidebar. Invite/remove flow included
+    so A-E are proven in one connected session. Outsiders hear nothing."""
+    an, ae = _uniq("Alice")
+    bn, be = _uniq("Bob")
+    cn, ce = _uniq("Carol")
+    signup(client, an, ae)
+    signup(client, bn, be)
+    signup(client, cn, ce)
+    a = login(client, ae)
+    b = login(client, be)
+    c = login(client, ce)
+    bob_id = me_id(client, b["access_token"])
+
+    stop = threading.Event()
+    qa, qb, qc = queue.Queue(), queue.Queue(), queue.Queue()
+    boxa: dict = {}
+    boxb: dict = {}
+    boxc: dict = {}
+    # Nobody can join: the project does not exist yet.
+    ta = threading.Thread(target=_listen, args=(client, a["access_token"], None, qa, stop, boxa), daemon=True)
+    tb = threading.Thread(target=_listen, args=(client, b["access_token"], None, qb, stop, boxb), daemon=True)
+    tc = threading.Thread(target=_listen, args=(client, c["access_token"], None, qc, stop, boxc), daemon=True)
+    ta.start()
+    tb.start()
+    tc.start()
+    try:
+        # E. owner creates → only the creator gets project_created.
+        r = client.post("/api/v1/projects", json={"name": "P"}, headers=authz(a["access_token"]))
+        assert r.status_code == 201, r.text
+        p = r.json()["data"]
+        msg = _next(qa)
+        assert msg["type"] == "project_created", msg
+        assert msg["project_id"] == p["id"], msg
+        r = client.get("/api/v1/projects?per_page=100", headers=authz(a["access_token"]))
+        assert p["id"] in {pr["id"] for pr in r.json()["data"]}
+        _none(qb)
+        _none(qc)
+        # A. owner invites Bob → Bob gets a personal invite event (no room).
+        r = client.post(
+            f"/api/v1/projects/{p['id']}/members",
+            json={"email": be, "role": "member"},
+            headers=authz(a["access_token"]),
+        )
+        assert r.status_code == 201, r.text
+        msg = _next(qb)
+        assert msg["type"] == "member_invited", msg
+        assert msg["project_id"] == p["id"] and msg["user_id"] == bob_id, msg
+        # B. refetch (what the real EfferdSidebar does on the event) lists it.
+        r = client.get("/api/v1/projects?per_page=100", headers=authz(b["access_token"]))
+        assert p["id"] in {pr["id"] for pr in r.json()["data"]}
+        # C. creator gets no personal invite echo; outsider hears nothing.
+        _none(qa)
+        _none(qc)
+        # D. removal: Bob is told personally, then the project is gone for him.
+        r = client.delete(f"/api/v1/projects/{p['id']}/members/{bob_id}", headers=authz(a["access_token"]))
+        assert r.status_code == 204, r.text
+        msg = _next(qb)
+        assert msg["type"] == "member_removed", msg
+        r = client.get("/api/v1/projects?per_page=100", headers=authz(b["access_token"]))
+        assert p["id"] not in {pr["id"] for pr in r.json()["data"]}
+        r = client.get(f"/api/v1/projects/{p['id']}", headers=authz(b["access_token"]))
+        assert r.status_code == 403, r.text
+    finally:
+        stop.set()
+        _close_all(boxa, boxb, boxc)
+        ta.join(timeout=10)
+        tb.join(timeout=10)
+        tc.join(timeout=10)
+
+
 def test_ws_removed_member_stops_hearing_room(client):
     """Req 25: eviction on removal is immediate, not eventual."""
     an, ae = _uniq("Alice")

@@ -3,6 +3,7 @@ import { useRouter } from "next/router";
 import { useCallback, useEffect, useState } from "react";
 import { useAuth } from "../../lib/auth";
 import { apiGet } from "../../lib/api";
+import { useTaskFlowSocket } from "../../hooks/useSocket";
 import SearchPalette from "../SearchPalette";
 import {
   DropdownMenu,
@@ -35,6 +36,44 @@ export default function EfferdSidebar({ currentProjectId, socketStatus }) {
   }, []);
   const [projectsList, setProjectsList] = useState([]);
   const [assignedCount, setAssignedCount] = useState(null);
+  // Sidebar owns its project list, so it owns the subscription that
+  // invalidates it. No projectId → no room join → only personal
+  // send_to_user events arrive here; room board traffic never triggers
+  // a refetch. Same hook/registry model as pages, no new connection design.
+  const { lastEvent } = useTaskFlowSocket();
+
+  const loadSidebar = useCallback(async (silent = false) => {
+    if (!silent) {
+      // Initial load keeps the long-standing behavior exactly.
+      try {
+        const [projData, assignedData] = await Promise.all([
+          apiGet("/api/v1/projects?per_page=10").catch(() => []),
+          apiGet("/api/v1/assigned?per_page=100").catch(() => []),
+        ]);
+        const pList = Array.isArray(projData) ? projData : [];
+        const aList = Array.isArray(assignedData) ? assignedData : [];
+        setProjectsList(pList);
+        setAssignedCount(aList.filter((t) => t.status !== "Done").length);
+      } catch {
+        setProjectsList([]);
+        setAssignedCount(null);
+      }
+      return;
+    }
+    // Silent background refetch: any failure preserves the on-screen list.
+    try {
+      const [projData, assignedData] = await Promise.all([
+        apiGet("/api/v1/projects?per_page=10"),
+        apiGet("/api/v1/assigned?per_page=100"),
+      ]);
+      const pList = Array.isArray(projData) ? projData : [];
+      const aList = Array.isArray(assignedData) ? assignedData : [];
+      setProjectsList(pList);
+      setAssignedCount(aList.filter((t) => t.status !== "Done").length);
+    } catch {
+      // Keep the existing list/count on screen.
+    }
+  }, []);
 
   const openPalette = useCallback(() => setPaletteOpen(true), []);
   const closePalette = useCallback(() => setPaletteOpen(false), []);
@@ -51,21 +90,24 @@ export default function EfferdSidebar({ currentProjectId, socketStatus }) {
   }, []);
 
   useEffect(() => {
-    let cancelled = false;
-    Promise.all([
-      apiGet("/api/v1/projects?per_page=10").catch(() => []),
-      apiGet("/api/v1/assigned?per_page=100").catch(() => []),
-    ]).then(([projData, assignedData]) => {
-      if (cancelled) return;
-      const pList = Array.isArray(projData) ? projData : [];
-      const aList = Array.isArray(assignedData) ? assignedData : [];
-      setProjectsList(pList);
-      setAssignedCount(aList.filter((t) => t.status !== "Done").length);
-    });
-    return () => {
-      cancelled = true;
-    };
-  }, []);
+    loadSidebar();
+  }, [loadSidebar]);
+
+  // Membership-only live update: a created/invited project appears (and a
+  // removed one disappears) without manual refresh. Every other event type
+  // (task moves, comments, activity) is ignored so the sidebar never
+  // refetches on routine board traffic.
+  const lastReceivedAt = lastEvent?._receivedAt;
+  useEffect(() => {
+    if (!lastEvent) return;
+    if (
+      lastEvent.type === "project_created" ||
+      lastEvent.type === "member_invited" ||
+      lastEvent.type === "member_removed"
+    ) {
+      loadSidebar(true);
+    }
+  }, [lastReceivedAt]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const handleLogout = useCallback(async () => {
     await logout();

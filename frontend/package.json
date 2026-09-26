@@ -8,7 +8,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "test": "node --test lib/api.refresh.test.mjs"
+    "test": "node --test lib/api.refresh.test.mjs lib/sidebar.realtime.test.mjs"
   },
   "dependencies": {
     "@radix-ui/react-avatar": "^1.2.6",
